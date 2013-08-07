@@ -34,6 +34,8 @@
 
 ;;; Code:
 
+(require 'helm)
+
 (defvar helm-recoll-options
   '("recoll" "-t" "-b")
   "A list where the `car' is the name of the recoll program followed by options.
