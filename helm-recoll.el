@@ -1,6 +1,8 @@
 ;;; helm-recoll.el --- helm interface for the recoll desktop search tool.
 
-;; Copyright (C) 2012 ~ 2013 Thierry Volpiatto <thierry.volpiatto@gmail.com>
+;; Copyright (C) 2013 Thierry Volpiatto <thierry.volpiatto@gmail.com>
+;; Copyright (C) 2013 Joe Bloggs vapniks@yahoo.com
+;; Copyright (C) 2013 Michael Heerdegen <michael_heerdegen@web.de>
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
