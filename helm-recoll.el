@@ -66,7 +66,9 @@ The source variable will be named `helm-source-recoll-NAME' where NAME is the fi
  (and should be a valid symbol name - i.e. no spaces).
 The CONFDIR arg should be a string indicating the path to the config directory which recoll should use."
   (require 'helm-mode)
-  (let ((initfunc (intern (concat "helm-recoll-init-" name))))
+  (let ((initfunc (intern (concat "helm-recoll-init-" name)))
+        (source (intern (concat "helm-source-recoll-" name)))
+        (command (intern (concat "helm-recoll-" name))))
     (eval
      `(defun ,initfunc nil
         (let ((process-connection-type nil))
@@ -93,7 +95,7 @@ The CONFDIR arg should be a string indicating the path to the config directory w
                  (helm-log "Error: Recoll %s"
                            (replace-regexp-in-string "\n" "" event)))))))))
     (eval
-     `(defvar ,(intern (concat "helm-source-recoll-" name))
+     `(defvar ,source
         '((name . ,(concat "Recoll " name))
           (candidates-process . ,initfunc)
           (candidate-transformer
@@ -109,11 +111,8 @@ The CONFDIR arg should be a string indicating the path to the config directory w
           (nohighlight))
         ,(concat "Source for retrieving files matching the current input pattern, using recoll with the configuration in "
                  confdir)))
-    (eval
-     `(helm-add-action-to-source
-       "Make link to file(s)"
-       'helm-recoll-make-links
-       (intern ,(concat "helm-source-recoll-" name))))))
+    (eval `(helm-add-action-to-source "Make link to file(s)" 'helm-recoll-make-links ,source))
+    (eval `(defun ,command nil (interactive) (helm ',source)))))
 
 (defun helm-recoll-make-links (candidate)
   "Make symlinks to the selected candidates."
