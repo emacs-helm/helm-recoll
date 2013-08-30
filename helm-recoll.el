@@ -6,7 +6,7 @@
 ;; Maintainer: Joe Bloggs <vapniks@yahoo.com> and Michael Heerdegen
 ;; Copyright (C) 2012 Thierry Volpiatto <thierry.volpiatto@gmail.com>
 ;; Copyright (C) 2013 Joe Bloggs <vapniks@yahoo.com> and Michael Heerdegen
-;; Version: 20130830
+;; Version: 20130830.2030
 ;; X-Original-Version: 1.1
 ;; Last-Updated: 2013-08-30 14:42:00
 ;;           By: Joe Bloggs
@@ -60,6 +60,24 @@
 You do not need to include the -c option since this is already included, and the config directory
 can be passed as a argument to `helm-recoll-create-source'")
 
+(defvar helm-recoll-sources-buffer "*helm recoll source select*")
+
+(defvar helm-recoll-sources-source
+  `((name . "helm-recoll sources")
+    (candidate-number-limit . 9999)
+    (candidates
+     . (lambda nil
+         (loop for vname in (all-completions "helm-source-recoll-" obarray)
+               for var = (intern vname)
+               for name = (ignore-errors (assoc-default 'name (symbol-value var)))
+               if name collect (cons (format "%s (%s)" name vname) var))))
+    (action . (("Invoke helm with selected sources" .
+                (lambda (candidate)
+                  (helm :sources (helm-marked-candidates) :buffer helm-recoll-sources-buffer)))
+               ("Describe variable" . describe-variable)))
+    (persistent-action . describe-variable)))
+
+;;;###autoload
 (defun helm-recoll-create-source (name confdir)
   "Function to create helm source for recoll search results.
 The source variable will be named `helm-source-recoll-NAME' where NAME is the first arg to the function
@@ -122,7 +140,11 @@ The CONFDIR arg should be a string indicating the path to the config directory w
           (make-symbolic-link item (concat dir (file-name-nondirectory item)) 1)
         (error (message "%s" (error-message-string err)))))))
 
-
+;;;###autoload
+(defun helm-recoll nil
+  "Call helm  source."
+  (interactive)
+  (helm 'helm-recoll-sources-source nil nil nil nil helm-recoll-sources-buffer))
 
 (provide 'helm-recoll)
 
