@@ -73,15 +73,109 @@ can be passed as a argument to `helm-recoll-create-source'")
                if name collect (cons (format "%s (%s)" name vname) var))))
     (action . (("Invoke helm with selected sources" .
                 (lambda (candidate)
-                  (helm :sources (helm-marked-candidates) :buffer helm-recoll-sources-buffer)))
+                  (helm :sources (helm-marked-candidates)
+                        :buffer helm-recoll-sources-buffer
+                        :keymap helm-recoll-map)))
                ("Describe variable" . describe-variable)))
     (persistent-action . describe-variable)))
 
+;; http://www.lesbonscomptes.com/recoll/usermanual/RCL.SEARCH.LANG.html
+(defvar helm-recoll-help-message
+  "=== Helm Recoll Query Options ===
+
+Enter one of the following options before your query to specify the query type:
+
+-l           advanced search query (default, see next section)
+-f           file name search query
+-a           all words search query (matches if document contains all the words)
+-o           any words search query (matches if document contains any of the words)
+
+
+=== Helm Recoll Advanced Queries ===
+
+Queries are sequences of terms with implicit AND and explicit OR and NOT (-) logical operators.
+NOT gets priority over OR which gets priority over AND (i.e. disjunctive normal form).
+Terms can be either a word or double quoted phrase to search for in the document, or a <FIELD>:<VALUE> pair
+as listed below. Wildcard (*/?/[]) and anchor characters (^/$) can be used in words, phrases and field
+values, and modifiers can be used for phrases (see below).
+
+For example:        ext:pdf -date:/2010 dir:local OR dir:share the OR \"the other\"
+is equivalent to:   ext:pdf AND (NOT date:/2010) AND (dir:local OR dir:share) AND (the OR other)
+ (search for words the or other in pdf files before 2010 with pathnames containing \"local\" or \"share\")
+
+== <FIELD>:<VALUE> pairs ==
+
+title:       for searching text in the document title or subject.
+author:      for searching the documents originators.
+recipient:   for searching the documents recipients.
+keyword:     for searching document-specified keywords (few documents actually have any).
+filename:    for the document's file name.
+ext:         specifies the file name extension (Ex: ext:html)
+dir:         for filtering on file location. Accepts negation, wildcards and tilde expansion. Case sensitive.
+size:        for filtering on file size. Use <,> or = as operators and letters k/K, m/M, g/G, t/T as multipliers.
+             e.g: size>100k size<1m (files between 100k and 1MB)
+date:        for filtering on dates (but not times). General syntax is 2 elements separated by a /. If either element
+             is missing it is interpreted as the first/last date in the index. Each element can be a date in the form
+             YYYY-MM-DD (the month or day may be missing) or a period in the form pNyNmNd where the N numbers are the
+             respective numbers of years, months or days, any of which may be missing.
+             Examples: 2001-03-01/p1y2m   the period covering 1 year and 2 months after the 1st of March 2003
+                       2001/              from the beginning of 2001 up to now
+                       /2001              all dates up to 2001
+                       p2d/               from 2 days ago up to now
+mime:        for specifying the mime type. Values will be OR'ed by default except for negated terms which are AND'ed.
+             You can use wildcards in the value (mime:text/*). Example: mime:application/* -mime:application/pdf 
+type:        for specifying the category as defined in /usr/share/recoll/mimeconf (e.g. text/media/presentation/etc.).
+             Categories are OR'ed like mime types above, but can't be negated with -
+
+== Wildcards & Anchors ==
+
+ *           matches 0 or more characters
+ ?           matches a single character
+ []          match any character within the square brackets
+ ^           match the beginning of the document text or field value
+ $           match the end of the document text or field value 
+
+Note: using wildcards at the beginning of a word/phrase can slow recoll down a lot.
+
+== Phrase Modifiers ==
+
+Any of the following phrase modifiers may be placed at the end of a double quoted phrase:
+
+ oN          allow upto N arbitrary words between words in phrase, e.g. ^\"test\"o5
+             if N is not specified it defaults to 10
+ l           turn off stemming (mostly makes sense with p because stemming is off by default for phrases)
+ p           turn default phrase search into a proximity one (unordered), e.g. \"order any in\"p
+ C           turn on case sensitivity
+ D           turn on diacritics sensitivity (if the index supports it)
+
+
+For more details see: http://www.lesbonscomptes.com/recoll/usermanual/RCL.SEARCH.LANG.html
+")
+
+(defvar helm-recoll-map
+  (let ((map (make-sparse-keymap)))
+    (set-keymap-parent map helm-map)
+;    (define-key map (kbd "M-<down>") 'helm-goto-next-file)
+;    (define-key map (kbd "M-<up>")   'helm-goto-precedent-file)
+;    (define-key map (kbd "C-c o")    'helm-grep-run-other-window-action)
+;    (define-key map (kbd "C-c C-o")  'helm-grep-run-other-frame-action)
+;    (define-key map (kbd "C-w")      'helm-yank-text-at-point)
+;    (define-key map (kbd "C-x C-s")  'helm-grep-run-save-buffer)
+    (define-key map (kbd "C-c ?")    'helm-recoll-help)
+    (delq nil map))
+  "Keymap used in recoll sources.")
+
+(defun helm-recoll-help ()
+  (interactive)
+  (let ((helm-help-message helm-recoll-help-message))
+    (helm-help)))
+
 ;;;###autoload
 (defun helm-recoll-create-source (name confdir)
-  "Function to create helm source for recoll search results.
-The source variable will be named `helm-source-recoll-NAME' where NAME is the first arg to the function
- (and should be a valid symbol name - i.e. no spaces).
+  "Function to create helm source and associated functions for recoll search results.
+A source variable named `helm-source-recoll-NAME' and a command named `helm-recoll-NAME'
+where NAME is the first arg to the function will be created.
+Also an init function named `helm-recoll-init-NAME' will be created.
 The CONFDIR arg should be a string indicating the path to the config directory which recoll should use."
   (require 'helm-mode)
   (let ((initfunc (intern (concat "helm-recoll-init-" name)))
@@ -94,7 +188,7 @@ The CONFDIR arg should be a string indicating the path to the config directory w
               (start-process-shell-command
                "recoll-process" helm-buffer
                (mapconcat #'identity (append helm-recoll-options
-                                             (list "-c" ,confdir helm-pattern))
+                                             (list "-c" ,confdir (shell-quote-argument helm-pattern)))
                           " "))
             (set-process-sentinel
              (get-process "recoll-process")
@@ -114,7 +208,7 @@ The CONFDIR arg should be a string indicating the path to the config directory w
                            (replace-regexp-in-string "\n" "" event)))))))))
     (eval
      `(defvar ,source
-        '((name . ,(concat "Recoll " name))
+        '((name . ,(concat "Recoll " name " (press C-c ? for query help)"))
           (candidates-process . ,initfunc)
           (candidate-transformer
            . (lambda (cs)
@@ -122,6 +216,7 @@ The CONFDIR arg should be a string indicating the path to the config directory w
                                    (replace-regexp-in-string "file://" "" c)))
                        cs)))
           (type . file)
+          (keymap . ,helm-recoll-map)
           (no-matchplugin)
           (requires-pattern . 3)
           (delayed)
@@ -130,7 +225,12 @@ The CONFDIR arg should be a string indicating the path to the config directory w
         ,(concat "Source for retrieving files matching the current input pattern, using recoll with the configuration in "
                  confdir)))
     (eval `(helm-add-action-to-source "Make link to file(s)" 'helm-recoll-make-links ,source))
-    (eval `(defun ,command nil (interactive) (helm ',source)))))
+    (eval `(defun ,command nil
+             ,(concat "Search " name " recoll database")
+             (interactive)
+             (helm :sources ',source
+                   :keymap helm-recoll-map
+                   :buffer helm-recoll-sources-buffer)))))
 
 (defun helm-recoll-make-links (candidate)
   "Make symlinks to the selected candidates."
@@ -142,9 +242,10 @@ The CONFDIR arg should be a string indicating the path to the config directory w
 
 ;;;###autoload
 (defun helm-recoll nil
-  "Call helm  source."
+  "Select recoll sources for helm."
   (interactive)
-  (helm 'helm-recoll-sources-source nil nil nil nil helm-recoll-sources-buffer))
+  (helm :sources 'helm-recoll-sources-source
+        :buffer helm-recoll-sources-buffer))
 
 (provide 'helm-recoll)
 
@@ -154,4 +255,5 @@ The CONFDIR arg should be a string indicating the path to the config directory w
 
 
 ;;; helm-recoll.el ends here
+
 
