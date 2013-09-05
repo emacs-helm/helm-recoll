@@ -6,9 +6,9 @@
 ;; Maintainer: Joe Bloggs <vapniks@yahoo.com> and Michael Heerdegen
 ;; Copyright (C) 2012 Thierry Volpiatto <thierry.volpiatto@gmail.com>
 ;; Copyright (C) 2013 Joe Bloggs <vapniks@yahoo.com> and Michael Heerdegen
-;; Version: 20130830.2030
+;; Version: 20130905.2230
 ;; X-Original-Version: 1.1
-;; Last-Updated: 2013-08-30 14:42:00
+;; Last-Updated: 2013-09-05 22:30:00
 ;;           By: Joe Bloggs
 ;; URL: https://github.com/vapniks/helm/blob/master/helm-recoll.el
 ;; Keywords: convenience
@@ -41,6 +41,8 @@
 ;; e.g. like this:
 ;;  (helm-recoll-create-source "docs" "~/.recoll/docs")
 ;;  (helm-recoll-create-source "progs" "~/.recoll/progs")
+;;
+;; Press C-c ? in the helm buffer to see information about how to query recoll
 
 ;; Then you can use the sources in helm like this: (helm :sources '(helm-source-recoll-docs helm-source-recoll-progs))
 
@@ -155,12 +157,6 @@ For more details see: http://www.lesbonscomptes.com/recoll/usermanual/RCL.SEARCH
 (defvar helm-recoll-map
   (let ((map (make-sparse-keymap)))
     (set-keymap-parent map helm-map)
-;    (define-key map (kbd "M-<down>") 'helm-goto-next-file)
-;    (define-key map (kbd "M-<up>")   'helm-goto-precedent-file)
-;    (define-key map (kbd "C-c o")    'helm-grep-run-other-window-action)
-;    (define-key map (kbd "C-c C-o")  'helm-grep-run-other-frame-action)
-;    (define-key map (kbd "C-w")      'helm-yank-text-at-point)
-;    (define-key map (kbd "C-x C-s")  'helm-grep-run-save-buffer)
     (define-key map (kbd "C-c ?")    'helm-recoll-help)
     (delq nil map))
   "Keymap used in recoll sources.")
