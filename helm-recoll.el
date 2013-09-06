@@ -6,7 +6,7 @@
 ;; Maintainer: Joe Bloggs <vapniks@yahoo.com> and Michael Heerdegen
 ;; Copyright (C) 2012 Thierry Volpiatto <thierry.volpiatto@gmail.com>
 ;; Copyright (C) 2013 Joe Bloggs <vapniks@yahoo.com> and Michael Heerdegen
-;; Version: 20130905.2230
+;; Version: 20130905.2300
 ;; X-Original-Version: 1.1
 ;; Last-Updated: 2013-09-05 22:30:00
 ;;           By: Joe Bloggs
