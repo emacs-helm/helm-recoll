@@ -64,6 +64,9 @@ can be passed as a argument to `helm-recoll-create-source'")
 
 (defvar helm-recoll-sources-buffer "*helm recoll source select*")
 
+(defvar helm-recoll-history nil
+  "History of helm-recoll queries")
+
 (defvar helm-recoll-sources-source
   `((name . "helm-recoll sources")
     (candidate-number-limit . 9999)
@@ -216,6 +219,7 @@ The CONFDIR arg should be a string indicating the path to the config directory w
           (no-matchplugin)
           (requires-pattern . 3)
           (delayed)
+          (history . ,'helm-recoll-history)
           (candidate-number-limit . 9999)
           (nohighlight))
         ,(concat "Source for retrieving files matching the current input pattern, using recoll with the configuration in "
@@ -226,6 +230,7 @@ The CONFDIR arg should be a string indicating the path to the config directory w
              (interactive)
              (helm :sources ',source
                    :keymap helm-recoll-map
+                   :history 'helm-recoll-history
                    :buffer helm-recoll-sources-buffer)))))
 
 (defun helm-recoll-make-links (candidate)
