@@ -6,9 +6,9 @@
 ;; Maintainer: Joe Bloggs <vapniks@yahoo.com> and Michael Heerdegen
 ;; Copyright (C) 2012 Thierry Volpiatto <thierry.volpiatto@gmail.com>
 ;; Copyright (C) 2013 Joe Bloggs <vapniks@yahoo.com> and Michael Heerdegen
-;; Version: 20130905.2305
+;; Version: 20130905.2330
 ;; X-Original-Version: 1.1
-;; Last-Updated: 2013-09-05 22:30:00
+;; Last-Updated: 2013-09-05 23:30:00
 ;;           By: Joe Bloggs
 ;; URL: https://github.com/emacs-helm/helm-recoll
 ;; Keywords: convenience
@@ -104,9 +104,9 @@ Terms can be either a word or double quoted phrase to search for in the document
 as listed below. Wildcard (*/?/[]) and anchor characters (^/$) can be used in words, phrases and field
 values, and modifiers can be used for phrases (see below).
 
-For example:        ext:pdf -date:/2010 dir:local OR dir:share the OR \"the other\"
-is equivalent to:   ext:pdf AND (NOT date:/2010) AND (dir:local OR dir:share) AND (the OR other)
- (search for words the or other in pdf files before 2010 with pathnames containing \"local\" or \"share\")
+For example:        ext:pdf -date:/2010 dir:local OR dir:share this OR that
+is equivalent to:   ext:pdf AND (NOT date:/2010) AND (dir:local OR dir:share) AND (this OR that)
+ (search for words this or that in pdf files before 2010 with pathnames containing \"local\" or \"share\")
 
 == <FIELD>:<VALUE> pairs ==
 
