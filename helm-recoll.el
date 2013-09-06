@@ -6,11 +6,11 @@
 ;; Maintainer: Joe Bloggs <vapniks@yahoo.com> and Michael Heerdegen
 ;; Copyright (C) 2012 Thierry Volpiatto <thierry.volpiatto@gmail.com>
 ;; Copyright (C) 2013 Joe Bloggs <vapniks@yahoo.com> and Michael Heerdegen
-;; Version: 20130905.2300
+;; Version: 20130905.2305
 ;; X-Original-Version: 1.1
 ;; Last-Updated: 2013-09-05 22:30:00
 ;;           By: Joe Bloggs
-;; URL: https://github.com/vapniks/helm/blob/master/helm-recoll.el
+;; URL: https://github.com/emacs-helm/helm-recoll
 ;; Keywords: convenience
 ;; Compatibility: GNU Emacs 24.3.1
 ;; Package-Requires: ((helm "1.5.4"))
