@@ -206,7 +206,7 @@ The CONFDIR arg should be a string indicating the path to the config directory w
                  (helm-log "Error: Recoll %s"
                            (replace-regexp-in-string "\n" "" event)))))))))
     (eval
-     `(defvar ,source
+     `(setq ,source
         '((name . ,(concat "Recoll " name " (press C-c ? for query help)"))
           (candidates-process . ,initfunc)
           (candidate-transformer
@@ -214,16 +214,17 @@ The CONFDIR arg should be a string indicating the path to the config directory w
                (mapcar (function (lambda (c)
                                    (replace-regexp-in-string "file://" "" c)))
                        cs)))
-          (type . file)
+          ;(type . file)
+	  (action
+	   ("Print path" . (lambda (candidate) (message "%s" candidate)))
+	   ("Find File"   . find-file))
           (keymap . ,helm-recoll-map)
           (no-matchplugin)
           (requires-pattern . 3)
           (delayed)
           (history . ,'helm-recoll-history)
           (candidate-number-limit . 9999)
-          (nohighlight))
-        ,(concat "Source for retrieving files matching the current input pattern, using recoll with the configuration in "
-                 confdir)))
+          (nohighlight))))
     (eval `(helm-add-action-to-source "Make link to file(s)" 'helm-recoll-make-links ,source))
     (eval `(defun ,command nil
              ,(concat "Search " name " recoll database")
