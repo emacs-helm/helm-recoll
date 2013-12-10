@@ -216,8 +216,8 @@ The CONFDIR arg should be a string indicating the path to the config directory w
                        cs)))
           ;(type . file)
 	  (action
-	   ("Print path" . (lambda (candidate) (message "%s" candidate)))
-	   ("Find File"   . find-file))
+	   ("Find File"   . find-file)
+	   ("Print path" . (lambda (candidate) (message "%s" candidate))))
           (keymap . ,helm-recoll-map)
           (no-matchplugin)
           (requires-pattern . 3)
