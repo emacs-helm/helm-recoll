@@ -160,14 +160,10 @@ For more details see: http://www.lesbonscomptes.com/recoll/usermanual/RCL.SEARCH
 (defvar helm-recoll-map
   (let ((map (make-sparse-keymap)))
     (set-keymap-parent map helm-map)
-    (define-key map (kbd "C-c ?")    'helm-recoll-help)
+    ;; Useless for help message, but maybe will be used later
+    ;; (define-key map (kbd "C-c ?")    'helm-recoll-help)
     (delq nil map))
   "Keymap used in recoll sources.")
-
-(defun helm-recoll-help ()
-  (interactive)
-  (let ((helm-help-message helm-recoll-help-message))
-    (helm-help)))
 
 ;;;###autoload
 (defun helm-recoll-create-source (name confdir)
@@ -209,6 +205,7 @@ The CONFDIR arg should be a string indicating the path to the config directory w
      `(defvar ,source
         '((name . ,(concat "Recoll " name " (press C-c ? for query help)"))
           (candidates-process . ,initfunc)
+	  (help-message . helm-recoll-help-message)
           (candidate-transformer
            . (lambda (cs)
                (mapcar (function (lambda (c)
