@@ -86,7 +86,9 @@ can be passed as a argument to `helm-recoll-create-source'")
 
 ;; http://www.lesbonscomptes.com/recoll/usermanual/RCL.SEARCH.LANG.html
 (defvar helm-recoll-help-message
-  "=== Helm Recoll Query Options ===
+  "* Helm Recoll Help
+
+** Helm Recoll Query Options
 
 Enter one of the following options before your query to specify the query type:
 
@@ -95,8 +97,7 @@ Enter one of the following options before your query to specify the query type:
 -a           all words search query (matches if document contains all the words)
 -o           any words search query (matches if document contains any of the words)
 
-
-=== Helm Recoll Advanced Queries ===
+** Recoll Advanced Queries
 
 Queries are sequences of terms with implicit AND and explicit OR and NOT (-) logical operators.
 NOT gets priority over OR which gets priority over AND (i.e. disjunctive normal form).
@@ -104,11 +105,19 @@ Terms can be either a word or double quoted phrase to search for in the document
 as listed below. Wildcard (*/?/[]) and anchor characters (^/$) can be used in words, phrases and field
 values, and modifiers can be used for phrases (see below).
 
-For example:        ext:pdf -date:/2010 dir:local OR dir:share this OR that
-is equivalent to:   ext:pdf AND (NOT date:/2010) AND (dir:local OR dir:share) AND (this OR that)
- (search for words this or that in pdf files before 2010 with pathnames containing \"local\" or \"share\")
+Example:
 
-== <FIELD>:<VALUE> pairs ==
+  ext:pdf -date:/2010 dir:local OR dir:share this OR that
+
+is equivalent to
+
+  ext:pdf AND (NOT date:/2010) AND (dir:local OR dir:share) AND (this OR that)
+
+meaning search for
+
+  pdf files BEFORE 2010 IN pathnames containing \"local\" or \"share\" with WORDS this or that IN
+
+*** <FIELD>:<VALUE> pairs
 
 title:       for searching text in the document title or subject.
 author:      for searching the documents originators.
@@ -128,21 +137,21 @@ date:        for filtering on dates (but not times). General syntax is 2 element
                        /2001              all dates up to 2001
                        p2d/               from 2 days ago up to now
 mime:        for specifying the mime type. Values will be OR'ed by default except for negated terms which are AND'ed.
-             You can use wildcards in the value (mime:text/*). Example: mime:application/* -mime:application/pdf 
+             You can use wildcards in the value (mime:text/*). Example: mime:application/* -mime:application/pdf
 type:        for specifying the category as defined in /usr/share/recoll/mimeconf (e.g. text/media/presentation/etc.).
              Categories are OR'ed like mime types above, but can't be negated with -
 
-== Wildcards & Anchors ==
+*** Wildcards & Anchors
 
  *           matches 0 or more characters
  ?           matches a single character
  []          match any character within the square brackets
  ^           match the beginning of the document text or field value
- $           match the end of the document text or field value 
+ $           match the end of the document text or field value
 
 Note: using wildcards at the beginning of a word/phrase can slow recoll down a lot.
 
-== Phrase Modifiers ==
+*** Phrase Modifiers
 
 Any of the following phrase modifiers may be placed at the end of a double quoted phrase:
 
@@ -153,9 +162,11 @@ Any of the following phrase modifiers may be placed at the end of a double quote
  C           turn on case sensitivity
  D           turn on diacritics sensitivity (if the index supports it)
 
+** References
 
-For more details see: http://www.lesbonscomptes.com/recoll/usermanual/RCL.SEARCH.LANG.html
-")
+For more details see:
+
+    http://www.lesbonscomptes.com/recoll/usermanual/RCL.SEARCH.LANG.html ")
 
 (defvar helm-recoll-map
   (let ((map (make-sparse-keymap)))
@@ -253,5 +264,3 @@ The CONFDIR arg should be a string indicating the path to the config directory w
 
 
 ;;; helm-recoll.el ends here
-
-
