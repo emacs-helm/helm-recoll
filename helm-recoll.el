@@ -67,23 +67,6 @@ can be passed as a argument to `helm-recoll-create-source'")
 (defvar helm-recoll-history nil
   "History of helm-recoll queries")
 
-(defvar helm-recoll-sources-source
-  `((name . "helm-recoll sources")
-    (candidate-number-limit . 9999)
-    (candidates
-     . (lambda nil
-         (loop for vname in (all-completions "helm-source-recoll-" obarray)
-               for var = (intern vname)
-               for name = (ignore-errors (assoc-default 'name (symbol-value var)))
-               if name collect (cons (format "%s (%s)" name vname) var))))
-    (action . (("Invoke helm with selected sources" .
-                (lambda (candidate)
-                  (helm :sources (helm-marked-candidates)
-                        :buffer helm-recoll-sources-buffer
-                        :keymap helm-recoll-map)))
-               ("Describe variable" . describe-variable)))
-    (persistent-action . describe-variable)))
-
 ;; http://www.lesbonscomptes.com/recoll/usermanual/RCL.SEARCH.LANG.html
 (defvar helm-recoll-help-message
   "* Helm Recoll Help
@@ -179,7 +162,8 @@ For more details see:
 (defvar helm-recoll-actions
   (let ((helm-recoll--actions helm-type-file-actions))
     (append helm-recoll--actions
-	    '(("Make link to file(s)" . helm-recoll-make-links))))
+	    '(("Make link to file(s)" . helm-recoll-make-links)
+	      ("Invoke helm with selected sources" . helm-recoll-action-invoke-helm))))
   "List of actions used in helm recoll.")
 
 ;;;###autoload
@@ -255,12 +239,18 @@ The CONFDIR arg should be a string indicating the path to the config directory w
           (make-symbolic-link item (concat dir (file-name-nondirectory item)) 1)
         (error (message "%s" (error-message-string err)))))))
 
+(defun helm-recoll-action-invoke-helm (candidate)
+  "Invoke helm with selected sources."
+  (helm :sources (helm-marked-candidates)
+	:buffer helm-recoll-sources-buffer
+	:keymap helm-recoll-map))
+
 ;;;###autoload
 (defun helm-recoll nil
   "Select recoll sources for helm."
   (interactive)
   (helm :sources 'helm-recoll-sources-source
-        :buffer helm-recoll-sources-buffer))
+	:buffer helm-recoll-sources-buffer))
 
 (provide 'helm-recoll)
 
