@@ -176,6 +176,12 @@ For more details see:
     (delq nil map))
   "Keymap used in recoll sources.")
 
+(defvar helm-recoll-actions
+  (let ((helm-recoll--actions helm-type-file-actions))
+    (append helm-recoll--actions
+	    '(("Make link to file(s)" . helm-recoll-make-links))))
+  "List of actions used in helm recoll.")
+
 ;;;###autoload
 (defun helm-recoll-create-source (name confdir)
   "Function to create helm source and associated functions for recoll search results.
@@ -226,13 +232,13 @@ The CONFDIR arg should be a string indicating the path to the config directory w
           (keymap . ,helm-recoll-map)
           (no-matchplugin)
           (requires-pattern . 3)
+	  (action . helm-recoll-actions)
           (delayed)
           (history . ,'helm-recoll-history)
           (candidate-number-limit . 9999)
           (nohighlight))
         ,(concat "Source for retrieving files matching the current input pattern, using recoll with the configuration in "
                  confdir)))
-    (eval `(helm-add-action-to-source "Make link to file(s)" 'helm-recoll-make-links ,source))
     (eval `(defun ,command nil
              ,(concat "Search " name " recoll database")
              (interactive)
