@@ -56,8 +56,7 @@
 
 (require 'helm)
 
-(defvar helm-recoll-options
-  '("recoll" "-t" "-b")
+(defvar helm-recoll-options '("recoll" "-t" "-b")
   "A list where the `car' is the name of the recoll program followed by options.
 You do not need to include the -c option since this is already included, and the config directory
 can be passed as a argument to `helm-recoll-create-source'")
@@ -65,9 +64,10 @@ can be passed as a argument to `helm-recoll-create-source'")
 (defvar helm-recoll-sources-buffer "*helm recoll source select*")
 
 (defvar helm-recoll-history nil
-  "History of helm-recoll queries")
+  "History of helm-recoll queries.")
 
-;; http://www.lesbonscomptes.com/recoll/usermanual/RCL.SEARCH.LANG.html
+;;; Help
+
 (defvar helm-recoll-help-message
   "* Helm Recoll Help
 
@@ -151,6 +151,8 @@ For more details see:
 
     http://www.lesbonscomptes.com/recoll/usermanual/RCL.SEARCH.LANG.html ")
 
+;;; Keymap
+
 (defvar helm-recoll-map
   (let ((map (make-sparse-keymap)))
     (set-keymap-parent map helm-map)
@@ -159,18 +161,36 @@ For more details see:
     (delq nil map))
   "Keymap used in recoll sources.")
 
+;;; Actions
+
 (defvar helm-recoll-actions
   (let ((helm-recoll--actions helm-type-file-actions))
     (append helm-recoll--actions
-	    '(("Make link to file(s)" . helm-recoll-make-links)
+	    '(("Make link to file(s)" . helm-recoll-action-make-links)
 	      ("Invoke helm with selected sources" . helm-recoll-action-invoke-helm))))
   "List of actions used in helm recoll.")
 
+(defun helm-recoll-action-make-links (candidate)
+  "Make symlinks to the selected CANDIDATE."
+  (let ((dir (ido-read-directory-name "Dir in which to place symlinks: ")))
+    (dolist (item (helm-marked-candidates))
+      (condition-case err
+          (make-symbolic-link item (concat dir (file-name-nondirectory item)) 1)
+        (error (message "%s" (error-message-string err)))))))
+
+(defun helm-recoll-action-invoke-helm (candidate)
+  "Invoke helm with selected CANDIDATE."
+  (helm :sources (helm-marked-candidates)
+	:buffer helm-recoll-sources-buffer
+	:keymap helm-recoll-map))
+
+;;; Main
+
 ;;;###autoload
 (defun helm-recoll-create-source (name confdir)
-  "Function to create helm source and associated functions for recoll search results.
-A source variable named `helm-source-recoll-NAME' and a command named `helm-recoll-NAME'
-where NAME is the first arg to the function will be created.
+  "Create helm source and associated functions for recoll search results.
+A source variable named `helm-source-recoll-NAME' and a command named
+`helm-recoll-NAME' where NAME is the first arg to the function will be created.
 Also an init function named `helm-recoll-init-NAME' will be created.
 The CONFDIR arg should be a string indicating the path to the config directory which recoll should use."
   (require 'helm-mode)
@@ -230,20 +250,6 @@ The CONFDIR arg should be a string indicating the path to the config directory w
                    :keymap helm-recoll-map
                    :history 'helm-recoll-history
                    :buffer helm-recoll-sources-buffer)))))
-
-(defun helm-recoll-make-links (candidate)
-  "Make symlinks to the selected candidates."
-  (let ((dir (ido-read-directory-name "Dir in which to place symlinks: ")))
-    (dolist (item (helm-marked-candidates))
-      (condition-case err
-          (make-symbolic-link item (concat dir (file-name-nondirectory item)) 1)
-        (error (message "%s" (error-message-string err)))))))
-
-(defun helm-recoll-action-invoke-helm (candidate)
-  "Invoke helm with selected sources."
-  (helm :sources (helm-marked-candidates)
-	:buffer helm-recoll-sources-buffer
-	:keymap helm-recoll-map))
 
 ;;;###autoload
 (defun helm-recoll nil
