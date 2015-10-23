@@ -165,7 +165,7 @@ For more details see:
 
 (defvar helm-recoll-actions
   (let ((helm-recoll--actions helm-find-files-actions))
-    (append (append '(("Invoke helm with selected sources" . helm-recoll-action-invoke-helm))
+    (append (append '(("Invoke Helm with selected sources" . helm-recoll-action-invoke-helm))
 		    helm-recoll--actions )
 	    '(("Make link to file(s)" . helm-recoll-action-make-links))))
   "List of actions used in helm recoll.")
@@ -180,9 +180,15 @@ For more details see:
 
 (defun helm-recoll-action-invoke-helm (candidate)
   "Invoke helm with selected CANDIDATE."
-  (helm :sources (helm-marked-candidates)
+  (helm :sources (helm-build-sync-source "Select"
+		   :candidates (helm-marked-candidates)
+		   :help-message helm-ff-help-message
+		   :keymap helm-recoll-map
+		   ;; :no-matchplugin t
+		   :fuzzy-match t
+		   :action helm-find-files-actions)
 	:buffer helm-recoll-sources-buffer
-	:keymap helm-recoll-map))
+	:keymap helm-recoll-map	))
 
 ;;; Main
 
