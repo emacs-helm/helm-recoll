@@ -155,7 +155,7 @@ For more details see:
 
 (defvar helm-recoll-map
   (let ((map (make-sparse-keymap)))
-    (set-keymap-parent map helm-map)
+    (set-keymap-parent map helm-find-files-map)
     ;; Useless for help message, but maybe will be used later
     ;; (define-key map (kbd "C-c ?")    'helm-recoll-help)
     (delq nil map))
@@ -164,8 +164,7 @@ For more details see:
 ;;; Actions
 
 (defvar helm-recoll-actions
-  (let ((helm-recoll--actions helm-type-file-actions))
-
+  (let ((helm-recoll--actions helm-find-files-actions))
     (append (append '(("Invoke helm with selected sources" . helm-recoll-action-invoke-helm))
 		    helm-recoll--actions )
 	    '(("Make link to file(s)" . helm-recoll-action-make-links))))
