@@ -169,7 +169,7 @@ For more details see:
 	  '(("Make link to file(s)" . helm-recoll-action-make-links)))
   "List of actions used in helm recoll.")
 
-(defun helm-recoll-action-make-links (candidate)
+(defun helm-recoll-action-make-links (_candidate)
   "Make symlinks to the selected CANDIDATE."
   (let ((dir (ido-read-directory-name "Dir in which to place symlinks: ")))
     (dolist (item (helm-marked-candidates))
@@ -177,7 +177,7 @@ For more details see:
           (make-symbolic-link item (concat dir (file-name-nondirectory item)) 1)
         (error (message "%s" (error-message-string err)))))))
 
-(defun helm-recoll-action-invoke-helm (candidate)
+(defun helm-recoll-action-invoke-helm (_candidate)
   "Invoke helm with selected CANDIDATE."
   (helm :sources (helm-build-sync-source "Select"
 		   :candidates (helm-marked-candidates)
