@@ -257,6 +257,23 @@ The CONFDIR arg should be a string indicating the path to the config directory w
                    :history 'helm-recoll-history
                    :buffer helm-recoll-sources-buffer)))))
 
+(defvar helm-recoll-sources-source
+  `((name . "helm-recoll sources")
+    (candidate-number-limit . 9999)
+    (candidates
+     . (lambda nil
+	 (loop for vname in (all-completions "helm-source-recoll-" obarray)
+	       for var = (intern vname)
+	       for name = (ignore-errors (assoc-default 'name (symbol-value var)))
+	       if name collect (cons (format "%s (%s)" name vname) var))))
+    (action . (("Invoke helm with selected sources" .
+		(lambda (candidate)
+		  (helm :sources (helm-marked-candidates)
+			:buffer helm-recoll-sources-buffer
+			:keymap helm-recoll-map)))
+	       ("Describe variable" . describe-variable)))
+    (persistent-action . describe-variable)))
+
 ;;;###autoload
 (defun helm-recoll nil
   "Select recoll sources for helm."
