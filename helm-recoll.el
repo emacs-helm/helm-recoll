@@ -164,10 +164,9 @@ For more details see:
 ;;; Actions
 
 (defvar helm-recoll-actions
-  (let ((helm-recoll--actions helm-find-files-actions))
-    (append (append '(("Invoke Helm with selected sources" . helm-recoll-action-invoke-helm))
-		    helm-recoll--actions )
-	    '(("Make link to file(s)" . helm-recoll-action-make-links))))
+  (append '(("Invoke Helm with selected sources" . helm-recoll-action-invoke-helm))
+	  helm-find-files-actions
+	  '(("Make link to file(s)" . helm-recoll-action-make-links)))
   "List of actions used in helm recoll.")
 
 (defun helm-recoll-action-make-links (candidate)
