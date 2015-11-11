@@ -187,7 +187,7 @@ For more details see:
 		   :fuzzy-match t
 		   :action helm-find-files-actions)
 	:buffer helm-recoll-sources-buffer
-	:keymap helm-recoll-map	))
+	:keymap helm-recoll-map))
 
 ;;; Main
 
