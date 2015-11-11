@@ -1,4 +1,4 @@
-;;; helm-recoll.el --- helm interface for the recoll desktop search tool.
+;;; helm-recoll.el --- helm interface for the recoll desktop search tool. -*- lexical-binding: t -*-
 
 ;; Filename: helm-recoll.el
 ;; Description: helm interface for the recoll desktop search tool.
