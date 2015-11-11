@@ -158,7 +158,7 @@ For more details see:
     (set-keymap-parent map helm-find-files-map)
     ;; Useless for help message, but maybe will be used later
     ;; (define-key map (kbd "C-c ?")    'helm-recoll-help)
-    (delq nil map))
+    map)
   "Keymap used in recoll sources.")
 
 ;;; Actions
