@@ -53,7 +53,8 @@
 ;;  =============
 ;;
 ;; Add code to your init (~/.emacs) file to create some sources (see above),
-;; and then add a require statement for the library: (require 'helm-recoll)
+;; and then add a require statement for the library:
+;;   (eval-when-compile (require 'helm-recoll nil t))
 
 ;;; Code:
 
@@ -198,85 +199,88 @@ For more details see:
 
 ;;; Main
 
+(defun helm-recoll--initialize (confdir)
+  (let ((process-connection-type nil))
+    (prog1
+        (start-process-shell-command
+         "recoll-process" helm-buffer
+         (mapconcat #'identity (append helm-recoll-options
+                                       (list "-c" confdir (shell-quote-argument helm-pattern)))
+                    " "))
+      (set-process-sentinel
+       (get-process "recoll-process")
+       (lambda (_process event)
+         (if (string= event "finished\n")
+             (with-helm-window
+               (setq mode-line-format
+                     '(" " mode-line-buffer-identification " "
+                       (line-number-mode "%l") " "
+                       (:eval (propertize
+                               (format "[Recoll Process Finish- (%s results)]"
+                                       (max (1- (count-lines
+                                                 (point-min) (point-max))) 0))
+                               'face 'helm-grep-finish))))
+               (force-mode-line-update))
+           (helm-log "Error: Recoll %s"
+                     (replace-regexp-in-string "\n" "" event))))))))
+
+(defun helm-recoll--make-source (name confdir)
+  `((name . ,name)
+    (candidates-process . ,(lambda () (helm-recoll--initialize confdir)))
+    (help-message . helm-recoll-help-message)
+    (candidate-transformer . ,(lambda (cs) (mapcar (lambda (c) (replace-regexp-in-string "file://" "" c)) cs)))
+    (type . file)
+    (keymap . helm-recoll-map)
+    (no-matchplugin)
+    (requires-pattern . 3)
+    (action . helm-recoll-actions)
+    (delayed)
+    (history . helm-recoll-history)
+    (candidate-number-limit . 9999)
+    (nohighlight)))
+
 ;;;###autoload
-(defun helm-recoll-create-source (name confdir)
+(defmacro helm-recoll-create-source (name confdir)
   "Create helm source and associated functions for recoll search results.
 A source variable named `helm-source-recoll-NAME' and a command named
 `helm-recoll-NAME' where NAME is the first arg to the function will be created.
 Also an init function named `helm-recoll-init-NAME' will be created.
 The CONFDIR arg should be a string indicating the path to the config directory which recoll should use."
   (require 'helm-mode)
-  (let ((initfunc (intern (concat "helm-recoll-init-" name)))
-        (source (intern (concat "helm-source-recoll-" name)))
+  (let ((source  (intern (concat "helm-source-recoll-" name)))
         (command (intern (concat "helm-recoll-" name))))
-    (eval
-     `(defun ,initfunc nil
-        (let ((process-connection-type nil))
-          (prog1
-              (start-process-shell-command
-               "recoll-process" helm-buffer
-               (mapconcat #'identity (append helm-recoll-options
-                                             (list "-c" ,confdir (shell-quote-argument helm-pattern)))
-                          " "))
-            (set-process-sentinel
-             (get-process "recoll-process")
-             (lambda (process event)
-               (if (string= event "finished\n")
-                   (with-helm-window
-                     (setq mode-line-format
-                           '(" " mode-line-buffer-identification " "
-                             (line-number-mode "%l") " "
-                             (:eval (propertize
-                                     (format "[Recoll Process Finish- (%s results)]"
-                                             (max (1- (count-lines
-                                                       (point-min) (point-max))) 0))
-                                     'face 'helm-grep-finish))))
-                     (force-mode-line-update))
-                 (helm-log "Error: Recoll %s"
-                           (replace-regexp-in-string "\n" "" event)))))))))
-    (eval
-     `(defvar ,source
-        '((name . ,(concat "Recoll " name " (press C-c ? for query help)"))
-          (candidates-process . ,initfunc)
-	  (help-message . helm-recoll-help-message)
-          (candidate-transformer
-           . (lambda (cs)
-               (mapcar (function (lambda (c)
-                                   (replace-regexp-in-string "file://" "" c)))
-                       cs)))
-          (type . file)
-          (keymap . ,helm-recoll-map)
-          (no-matchplugin)
-          (requires-pattern . 3)
-	  (action . helm-recoll-actions)
-          (delayed)
-          (history . ,'helm-recoll-history)
-          (candidate-number-limit . 9999)
-          (nohighlight))
-        ,(concat "Source for retrieving files matching the current input pattern, using recoll with the configuration in "
-                 confdir)))
-    (eval `(defun ,command nil
-             ,(concat "Search " name " recoll database")
-             (interactive)
-             (helm :sources ',source
-                   :keymap helm-recoll-map
-                   :history 'helm-recoll-history
-                   :buffer helm-recoll-sources-buffer)))))
+    `(progn
+       (defun ,command ()
+         ,(concat "Search " name " recoll database")
+         (interactive)
+         (require 'helm-recoll)
+         (helm :sources ',source
+               :keymap helm-recoll-map
+               :history 'helm-recoll-history
+               :buffer helm-recoll-sources-buffer))
+       (with-eval-after-load 'helm-recoll
+         (defvar ,source
+           (helm-recoll--make-source
+            ,(concat "Recoll " name " (press C-c ? for query help)")
+            ,confdir)
+           ,(concat "\
+Source for retrieving files matching the current input pattern, \
+using recoll with the configuration in " confdir))))))
 
 (defvar helm-recoll-sources-source
   `((name . "helm-recoll sources")
     (candidate-number-limit . 9999)
     (candidates
-     . (lambda nil
-	 (cl-loop for vname in (all-completions "helm-source-recoll-" obarray)
-	       for var = (intern vname)
-	       for name = (ignore-errors (assoc-default 'name (symbol-value var)))
-	       if name collect (cons (format "%s (%s)" name vname) var))))
+     . ,(lambda ()
+          (cl-loop for vname in (all-completions "helm-source-recoll-" obarray)
+                for var = (intern vname)
+                for name = (ignore-errors (assoc-default 'name (symbol-value var)))
+                if name collect (cons (format "%s (%s)" name vname) var))))
     (action . (("Invoke helm with selected sources" .
-		(lambda (candidate)
-		  (helm :sources (helm-marked-candidates)
-			:buffer helm-recoll-sources-buffer
-			:keymap helm-recoll-map)))
+		,(lambda (_candidate)
+                   (helm :sources (helm-marked-candidates)
+                         :buffer helm-recoll-sources-buffer
+                         :keymap helm-recoll-map)))
 	       ("Describe variable" . describe-variable)))
     (persistent-action . describe-variable)))
 
