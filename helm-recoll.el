@@ -47,7 +47,8 @@
 ;;
 ;; Press C-c ? in the helm buffer to see information about how to query recoll
 
-;; Then you can use the sources in helm like this: (helm :sources '(helm-source-recoll-docs helm-source-recoll-progs))
+;; Then you can use the sources in helm like this:
+;;   (helm :sources '(helm-source-recoll-docs helm-source-recoll-progs))
 
 ;;; Installation:
 ;;  =============
@@ -63,11 +64,10 @@
 (require 'helm)
 (require 'helm-files)
 
-
 (defvar helm-recoll-options '("recoll" "-t" "-b")
   "A list where the `car' is the name of the recoll program followed by options.
-You do not need to include the -c option since this is already included, and the config directory
-can be passed as a argument to `helm-recoll-create-source'")
+You do not need to include the -c option since this is already included, and the
+config directory can be passed as a argument to `helm-recoll-create-source'")
 
 (defvar helm-recoll-sources-buffer "*helm recoll source select*")
 
@@ -245,7 +245,8 @@ For more details see:
 A source variable named `helm-source-recoll-NAME' and a command named
 `helm-recoll-NAME' where NAME is the first arg to the function will be created.
 Also an init function named `helm-recoll-init-NAME' will be created.
-The CONFDIR arg should be a string indicating the path to the config directory which recoll should use."
+The CONFDIR arg should be a string indicating the path to the config directory
+which recoll should use."
   (require 'helm-mode)
   (let ((source  (intern (concat "helm-source-recoll-" name)))
         (command (intern (concat "helm-recoll-" name))))
@@ -273,9 +274,9 @@ using recoll with the configuration in " confdir))))))
     (candidates
      . ,(lambda ()
           (cl-loop for vname in (all-completions "helm-source-recoll-" obarray)
-                for var = (intern vname)
-                for name = (ignore-errors (assoc-default 'name (symbol-value var)))
-                if name collect (cons (format "%s (%s)" name vname) var))))
+		   for var = (intern vname)
+		   for name = (ignore-errors (assoc-default 'name (symbol-value var)))
+		   if name collect (cons (format "%s (%s)" name vname) var))))
     (action . (("Invoke helm with selected sources" .
 		,(lambda (_candidate)
                    (helm :sources (helm-marked-candidates)
@@ -296,6 +297,5 @@ using recoll with the configuration in " confdir))))))
 ;; Test:
 ;; (helm-recoll-create-source "main" "~/.recoll")
 ;; (helm :sources 'helm-source-recoll-main)
-
 
 ;;; helm-recoll.el ends here
