@@ -12,7 +12,7 @@
 ;; Keywords: convenience
 ;; Compatibility: GNU Emacs 25.0.50.1
 ;; Version: 0.1
-;; Package-Requires: ((helm-core "1.7.7"))
+;; Package-Requires: ((helm "1.7.7"))
 ;;
 ;; Features that might be required by this library:
 ;;
@@ -58,6 +58,7 @@
 ;;; Code:
 
 (require 'helm)
+(require 'helm-files)
 
 (defvar helm-recoll-options '("recoll" "-t" "-b")
   "A list where the `car' is the name of the recoll program followed by options.
