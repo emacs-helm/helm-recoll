@@ -57,8 +57,11 @@
 
 ;;; Code:
 
+(eval-when-compile
+  (require 'cl-lib))
 (require 'helm)
 (require 'helm-files)
+
 
 (defvar helm-recoll-options '("recoll" "-t" "-b")
   "A list where the `car' is the name of the recoll program followed by options.
@@ -265,7 +268,7 @@ The CONFDIR arg should be a string indicating the path to the config directory w
     (candidate-number-limit . 9999)
     (candidates
      . (lambda nil
-	 (loop for vname in (all-completions "helm-source-recoll-" obarray)
+	 (cl-loop for vname in (all-completions "helm-source-recoll-" obarray)
 	       for var = (intern vname)
 	       for name = (ignore-errors (assoc-default 'name (symbol-value var)))
 	       if name collect (cons (format "%s (%s)" name vname) var))))
