@@ -4,13 +4,13 @@
 ;; Copyright (C) 2013 Joe Bloggs <vapniks@yahoo.com> and Michael Heerdegen
 
 ;; Author: Thierry Volpiatto <thierry.volpiatto@gmail.com>
-;; Maintainer: Joe Bloggs <vapniks@yahoo.com> and Michael Heerdegen
+;; Maintainers: Joe Bloggs <vapniks@yahoo.com>, Michael Heerdegen and Cayetano Santos
 
 ;; Filename: helm-recoll.el
 ;; Description: helm interface for the recoll desktop search tool.
 ;; URL: https://github.com/emacs-helm/helm-recoll
 ;; Keywords: convenience
-;; Compatibility: GNU Emacs 25.0.50.1
+;; Compatibility: GNU Emacs >= 24.3
 ;; Version: 0.1
 ;; Package-Requires: ((helm "1.7.7"))
 ;;
