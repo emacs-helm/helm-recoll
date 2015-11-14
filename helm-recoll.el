@@ -171,14 +171,8 @@ For more details see:
 
 ;;; Actions
 
-(defvar helm-recoll-actions
-  (append '(("Invoke Helm with selected sources" . helm-recoll-action-invoke-helm))
-	  helm-find-files-actions
-	  '(("Make link to file(s)" . helm-recoll-action-make-links)))
-  "List of actions used in helm recoll.")
-
 (defun helm-recoll-action-make-links (_candidate)
-  "Make symlinks to the selected CANDIDATE."
+  "Make symlinks to the selected candidates."
   (let ((dir (ido-read-directory-name "Dir in which to place symlinks: ")))
     (dolist (item (helm-marked-candidates))
       (condition-case err
@@ -199,7 +193,9 @@ For more details see:
 
 ;;; Main
 
-(defun helm-recoll--initialize (confdir)
+(defun helm-recoll--candidates-process (&optional confdir)
+  "Function used as candidates-process by `helm-recoll-source'."
+  (setq confdir (or confdir (helm-attr 'confdir)))
   (let ((process-connection-type nil))
     (prog1
         (start-process-shell-command
@@ -218,26 +214,34 @@ For more details see:
                        (:eval (propertize
                                (format "[Recoll Process Finish- (%s results)]"
                                        (max (1- (count-lines
-                                                 (point-min) (point-max))) 0))
+                                                 (point-min) (point-max)))
+                                            0))
                                'face 'helm-grep-finish))))
                (force-mode-line-update))
            (helm-log "Error: Recoll %s"
                      (replace-regexp-in-string "\n" "" event))))))))
 
-(defun helm-recoll--make-source (name confdir)
-  `((name . ,name)
-    (candidates-process . ,(lambda () (helm-recoll--initialize confdir)))
-    (help-message . helm-recoll-help-message)
-    (candidate-transformer . ,(lambda (cs) (mapcar (lambda (c) (replace-regexp-in-string "file://" "" c)) cs)))
-    (type . file)
-    (keymap . helm-recoll-map)
-    (no-matchplugin)
-    (requires-pattern . 3)
-    (action . helm-recoll-actions)
-    (delayed)
-    (history . helm-recoll-history)
-    (candidate-number-limit . 9999)
-    (nohighlight)))
+(defun helm-recoll-filter-one-by-one (file)
+  "Function used as filter-one-by-one by `helm-recoll-source'."
+  (replace-regexp-in-string "\\`file://" "" (if (consp file) (cdr file) file)))
+
+(defclass helm-recoll-source (helm-source-async helm-type-file)
+  ((confdir :initarg :confdir
+            :initform nil
+            :custom 'file)
+   (filter-one-by-one :initform #'helm-recoll-filter-one-by-one)
+   (candidates-process :initform #'helm-recoll--candidates-process)
+   (help-message :initform helm-recoll-help-message)
+   (keymap :initform helm-recoll-map)
+   (requires-pattern :initform 3)
+   (history :initform helm-recoll-history)
+   (candidate-number-limit :initform 9999)
+   (nohighlight :initform t)))
+
+(defmethod helm--setup-source ((source helm-recoll-source))
+  (set-slot-value source 'action
+                  (append helm-type-file-actions
+                          '(("Make link to file(s)" . helm-recoll-action-make-links)))))
 
 ;;;###autoload
 (defmacro helm-recoll-create-source (name confdir)
@@ -261,9 +265,8 @@ which recoll should use."
                :buffer helm-recoll-sources-buffer))
        (with-eval-after-load 'helm-recoll
          (defvar ,source
-           (helm-recoll--make-source
-            ,(concat "Recoll " name " (press C-c ? for query help)")
-            ,confdir)
+           (helm-make-source ,(concat "Recoll " name " (press C-c ? for query help)")
+               'helm-recoll-source :confdir ,confdir)
            ,(concat "\
 Source for retrieving files matching the current input pattern, \
 using recoll with the configuration in " confdir))))))
