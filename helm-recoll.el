@@ -85,18 +85,21 @@ config directory can be passed as a argument to `helm-recoll-create-source'")
 
 Enter one of the following options before your query to specify the query type:
 
--l           advanced search query (default, see next section)
--f           file name search query
--a           all words search query (matches if document contains all the words)
--o           any words search query (matches if document contains any of the words)
+-l      advanced search query (default, see next section)
+-f      file name search query
+-a      all words search query (matches if document contains all the words)
+-o      any words search query (matches if document contains any of the words)
 
 ** Recoll Advanced Queries
 
-Queries are sequences of terms with implicit AND and explicit OR and NOT (-) logical operators.
-NOT gets priority over OR which gets priority over AND (i.e. disjunctive normal form).
-Terms can be either a word or double quoted phrase to search for in the document, or a <FIELD>:<VALUE> pair
-as listed below. Wildcard (*/?/[]) and anchor characters (^/$) can be used in words, phrases and field
-values, and modifiers can be used for phrases (see below).
+Queries are sequences of terms with implicit AND and explicit OR and NOT (-)
+logical operators. NOT gets priority over OR which gets priority over AND
+(i.e. disjunctive normal form).
+
+Terms can be either a word or double quoted phrase to search for in the
+document, or a <FIELD>:<VALUE> pair as listed below. Wildcard (*/?/[]) and
+anchor characters (^/$) can be used in words, phrases and field values, and
+modifiers can be used for phrases (see below).
 
 Example:
 
@@ -108,52 +111,79 @@ is equivalent to
 
 meaning search for
 
-  pdf files BEFORE 2010 IN pathnames containing \"local\" or \"share\" with WORDS this or that IN
+  pdf files BEFORE 2010 IN pathnames containing \"local\" or \"share\" with
+  WORDS this or that IN
 
 *** <FIELD>:<VALUE> pairs
 
-title:       for searching text in the document title or subject.
-author:      for searching the documents originators.
-recipient:   for searching the documents recipients.
-keyword:     for searching document-specified keywords (few documents actually have any).
-filename:    for the document's file name.
-ext:         specifies the file name extension (Ex: ext:html)
-dir:         for filtering on file location. Accepts negation, wildcards and tilde expansion. Case sensitive.
-size:        for filtering on file size. Use <,> or = as operators and letters k/K, m/M, g/G, t/T as multipliers.
-             e.g: size>100k size<1m (files between 100k and 1MB)
-date:        for filtering on dates (but not times). General syntax is 2 elements separated by a /. If either element
-             is missing it is interpreted as the first/last date in the index. Each element can be a date in the form
-             YYYY-MM-DD (the month or day may be missing) or a period in the form pNyNmNd where the N numbers are the
-             respective numbers of years, months or days, any of which may be missing.
-             Examples: 2001-03-01/p1y2m   the period covering 1 year and 2 months after the 1st of March 2003
-                       2001/              from the beginning of 2001 up to now
-                       /2001              all dates up to 2001
-                       p2d/               from 2 days ago up to now
-mime:        for specifying the mime type. Values will be OR'ed by default except for negated terms which are AND'ed.
-             You can use wildcards in the value (mime:text/*). Example: mime:application/* -mime:application/pdf
-type:        for specifying the category as defined in /usr/share/recoll/mimeconf (e.g. text/media/presentation/etc.).
-             Categories are OR'ed like mime types above, but can't be negated with -
+title:      searching text in the document title or subject
+
+author:     searching the documents originators
+
+recipient:  searching the documents recipients
+
+keyword:    searching document-specified keywords (few documents actually
+							have any)
+filename:   the document's file name
+
+ext:        specifies the file name extension
+            e.g.: ext:html
+
+dir:        filtering on file location
+            accepts negation, wildcards and tilde expansion; case sensitive
+
+size:       filtering on file size
+            use <,> or = and letters k/K, m/M, g/G, t/T as multipliers
+            e.g (files between 100k and 1MB): size>100k size<1m
+
+date:       for filtering on dates (but not times). General syntax is 2
+            elements separated by a /. If either element is missing it is
+            interpreted as the first/last date in the index. Each element can
+            be a date in the form YYYY-MM-DD (the month or day may be missing)
+            or a period in the form pNyNmNd where the N numbers are the
+            respective numbers of years, months or days, any of which may be
+            missing.
+            e.g.:
+            2001-03-01/p1y2m   the period covering 1 year and 2 months after
+                                the 1st of March 2003
+            2001/              from the beginning of 2001 up to now
+            /2001              all dates up to 2001
+            p2d/               from 2 days ago up to now
+
+mime:       mime type
+            values will be OR'ed by default except for negated terms which
+            are AND'ed; you can use wildcards in the value (mime:text/*)
+            e.g.: mime:application/* -mime:application/pdf
+
+type:       category as defined in /usr/share/recoll/mimeconf
+            (e.g. text/media/presentation/etc.).
+            categories are OR'ed like mime types above, but can't be negated
+            with -
 
 *** Wildcards & Anchors
 
- *           matches 0 or more characters
- ?           matches a single character
- []          match any character within the square brackets
- ^           match the beginning of the document text or field value
- $           match the end of the document text or field value
+*           matches 0 or more characters
+?           matches a single character
+[]          match any character within the square brackets
+^           match the beginning of the document text or field value
+$           match the end of the document text or field value
 
-Note: using wildcards at the beginning of a word/phrase can slow recoll down a lot.
+Note: wildcards at the beginning of a word/phrase can slow recoll down a lot
 
 *** Phrase Modifiers
 
-Any of the following phrase modifiers may be placed at the end of a double quoted phrase:
+Any of the following phrase modifiers may be placed at the end of a double
+quoted phrase:
 
- oN          allow upto N arbitrary words between words in phrase, e.g. ^\"test\"o5
-             if N is not specified it defaults to 10
- l           turn off stemming (mostly makes sense with p because stemming is off by default for phrases)
- p           turn default phrase search into a proximity one (unordered), e.g. \"order any in\"p
- C           turn on case sensitivity
- D           turn on diacritics sensitivity (if the index supports it)
+oN          allow upto N arbitrary words between words in phrase,
+            e.g. ^\"test\"o5
+            if N is not specified it defaults to 10
+l           turn off stemming (mostly makes sense with p because stemming is
+				      off by default for phrases)
+p           turn default phrase search into a proximity one (unordered),
+            e.g. \"order any in\"p
+C           turn on case sensitivity
+D           turn on diacritics sensitivity (if the index supports it)
 
 ** References
 
