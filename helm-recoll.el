@@ -1,7 +1,7 @@
 ;;; helm-recoll.el --- helm interface for the recoll desktop search tool. -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2012 Thierry Volpiatto
-;; Copyright (C) 2013 Joe Bloggs, Michael Heerdegen and Cayetano Santos
+;; Copyright (C) 2013-2015 Joe Bloggs, Michael Heerdegen and Cayetano Santos
 
 ;; Author:      Thierry Volpiatto <thierry.volpiatto at gmail.com>
 ;; Maintainers: Joe Bloggs <vapniks at yahoo.com>,
