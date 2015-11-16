@@ -212,16 +212,14 @@ For more details see:
         (error (message "%s" (error-message-string err)))))))
 
 (defun helm-recoll-action-require-helm (_candidate)
-  "Invoke helm with selected CANDIDATE."
+  "Invoke helm with selected candidates."
   (helm :sources (helm-build-sync-source "Select"
 		   :candidates (helm-marked-candidates)
 		   :help-message helm-ff-help-message
-		   :keymap helm-recoll-map
+		   :keymap helm-find-files-map
 		   ;; :no-matchplugin t
 		   :fuzzy-match t
-		   :action helm-find-files-actions)
-	:buffer helm-recoll-sources-buffer
-	:keymap helm-recoll-map))
+		   :action helm-find-files-actions)))
 
 ;;; Main
 
@@ -272,7 +270,7 @@ For more details see:
 
 (defmethod helm--setup-source ((source helm-recoll-source))
   (set-slot-value source 'action
-                  (append '(("Require helm on selected candidates"
+                  (append '(("Run helm with selected candidates"
 			     . helm-recoll-action-require-helm))
 			  helm-type-file-actions
 			  '(("Make link to file(s)" . helm-recoll-action-make-links)))))
