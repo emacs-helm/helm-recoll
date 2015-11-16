@@ -211,7 +211,7 @@ For more details see:
           (make-symbolic-link item (concat dir (file-name-nondirectory item)) 1)
         (error (message "%s" (error-message-string err)))))))
 
-(defun helm-recoll-action-invoke-helm (_candidate)
+(defun helm-recoll-action-require-helm (_candidate)
   "Invoke helm with selected CANDIDATE."
   (helm :sources (helm-build-sync-source "Select"
 		   :candidates (helm-marked-candidates)
@@ -272,8 +272,10 @@ For more details see:
 
 (defmethod helm--setup-source ((source helm-recoll-source))
   (set-slot-value source 'action
-                  (append helm-type-file-actions
-                          '(("Make link to file(s)" . helm-recoll-action-make-links)))))
+                  (append '(("Require helm on selected candidates"
+			     . helm-recoll-action-require-helm))
+			  helm-type-file-actions
+			  '(("Make link to file(s)" . helm-recoll-action-make-links)))))
 
 ;;;###autoload
 (defmacro helm-recoll-create-source (name confdir)
