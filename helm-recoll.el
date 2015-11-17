@@ -251,7 +251,13 @@ For more details see:
   "Function used as filter-one-by-one by `helm-recoll-source'."
   (replace-regexp-in-string "\\`file://" "" (if (consp file) (cdr file) file)))
 
-(defclass helm-recoll-source (helm-source-async helm-type-file)
+(defun helm-recoll-source-action-transformer (&rest _)
+  "Default action-transformer of the `helm-recoll-source' class."
+  `(("Run helm with selected candidates" . helm-recoll-action-require-helm)
+    ,@helm-type-file-actions
+    ("Make link to file(s)" . helm-recoll-action-make-links)))
+
+(defclass helm-recoll-source (helm-source-async)
   ((confdir :initarg :confdir
             :initform nil
             :custom 'file)
@@ -262,14 +268,8 @@ For more details see:
    (requires-pattern :initform 3)
    (history :initform helm-recoll-history)
    (candidate-number-limit :initform 9999)
-   (nohighlight :initform t)))
-
-(defmethod helm--setup-source ((source helm-recoll-source))
-  (set-slot-value source 'action
-                  (append '(("Run helm with selected candidates"
-			     . helm-recoll-action-require-helm))
-			  helm-type-file-actions
-			  '(("Make link to file(s)" . helm-recoll-action-make-links)))))
+   (nohighlight :initform t)
+   (action-transformer :initform #'helm-recoll-source-action-transformer)))
 
 ;;;###autoload
 (defmacro helm-recoll-create-source (name confdir)
