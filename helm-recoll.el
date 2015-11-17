@@ -227,12 +227,8 @@ For more details see:
   "Function used as candidates-process by `helm-recoll-source'."
   (setq confdir (or confdir (helm-attr 'confdir)))
   (let ((process-connection-type nil))
-    (prog1
-        (start-process-shell-command
-         "recoll-process" helm-buffer
-         (mapconcat #'identity (append helm-recoll-options
-                                       (list "-c" confdir (shell-quote-argument helm-pattern)))
-                    " "))
+    (prog1 (apply #'start-process "recoll-process" helm-buffer
+                  (append helm-recoll-options (list "-c" confdir) (split-string  helm-pattern " ")))
       (set-process-sentinel
        (get-process "recoll-process")
        (lambda (_process event)
@@ -278,30 +274,30 @@ For more details see:
 ;;;###autoload
 (defmacro helm-recoll-create-source (name confdir)
   "Create helm source and associated functions for recoll search results.
-A source variable named `helm-source-recoll-NAME' and a command named
-`helm-recoll-NAME' where NAME is the first arg to the function will be created.
-Also an init function named `helm-recoll-init-NAME' will be created.
-The CONFDIR arg should be a string indicating the path to the config directory
+The first argument NAME is a string.  Define a source variable
+named `helm-source-recoll-NAME' and a command named
+`helm-recoll-NAME'.  CONFDIR is the path to the config directory
 which recoll should use."
   (require 'helm-mode)
   (let ((source  (intern (concat "helm-source-recoll-" name)))
         (command (intern (concat "helm-recoll-" name))))
-    `(progn
-       (defun ,command ()
-         ,(concat "Search " name " recoll database")
-         (interactive)
-         (require 'helm-recoll)
-         (helm :sources ',source
-               :keymap helm-recoll-map
-               :history 'helm-recoll-history
-               :buffer helm-recoll-sources-buffer))
-       (with-eval-after-load 'helm-recoll
-         (defvar ,source
-           (helm-make-source ,(concat "Recoll " name " (press C-c ? for query help)")
-               'helm-recoll-source :confdir ,confdir)
-           ,(concat "\
-Source for retrieving files matching the current input pattern, \
-using recoll with the configuration in " confdir))))))
+    (macroexp-let2 nil dir `(expand-file-name ,confdir)
+      `(progn
+         (defun ,command ()
+           ,(format "Search \"%s\" recoll database." name)
+           (interactive)
+           (require 'helm-recoll)
+           (helm :sources ',source
+                 :keymap helm-recoll-map
+                 :history 'helm-recoll-history
+                 :buffer helm-recoll-sources-buffer))
+         (with-eval-after-load 'helm-recoll
+           (defvar ,source
+             (helm-make-source ,(concat "Recoll " name " (press C-c ? for query help)")
+                 'helm-recoll-source :confdir ,dir))
+           (put ',source 'variable-documentation (format "\
+Source for retrieving files matching the current input pattern
+using recoll with the configuration in \"%s\"." ,dir)))))))
 
 (defvar helm-recoll-sources-source
   `((name . "helm-recoll sources")
