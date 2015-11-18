@@ -299,22 +299,25 @@ which recoll should use."
 Source for retrieving files matching the current input pattern
 using recoll with the configuration in \"%s\"." ,dir)))))))
 
+(defclass helm-recoll-sources (helm-source-sync)
+  ((candidate-number-limit :initform 9999)
+   (candidates :initform
+               (lambda ()
+                 (cl-loop for vname in (all-completions "helm-source-recoll-" obarray)
+                          for var = (intern vname)
+                          for name = (ignore-errors (assoc-default 'name (symbol-value var)))
+                          if name collect (cons (format "%s (%s)" name vname) var))))
+   (action :initform `(("Invoke helm with selected sources" .
+                        ,(lambda (_candidate)
+                           (helm :sources (helm-marked-candidates)
+                                 :buffer helm-recoll-sources-buffer
+                                 :keymap helm-recoll-map)))
+                       ("Describe variable" . describe-variable)))
+   (persistent-action :initform #'describe-variable)))
+
 (defvar helm-recoll-sources-source
-  `((name . "helm-recoll sources")
-    (candidate-number-limit . 9999)
-    (candidates
-     . ,(lambda ()
-          (cl-loop for vname in (all-completions "helm-source-recoll-" obarray)
-		   for var = (intern vname)
-		   for name = (ignore-errors (assoc-default 'name (symbol-value var)))
-		   if name collect (cons (format "%s (%s)" name vname) var))))
-    (action . (("Invoke helm with selected sources" .
-		,(lambda (_candidate)
-                   (helm :sources (helm-marked-candidates)
-                         :buffer helm-recoll-sources-buffer
-                         :keymap helm-recoll-map)))
-	       ("Describe variable" . describe-variable)))
-    (persistent-action . describe-variable)))
+  (helm-make-source "helm-recoll sources" 'helm-recoll-sources)
+  "Source for browsing all defined recoll sources.")
 
 ;;;###autoload
 (defun helm-recoll nil
