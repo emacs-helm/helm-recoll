@@ -293,7 +293,7 @@ which recoll should use."
                  :buffer helm-recoll-sources-buffer))
          (with-eval-after-load 'helm-recoll
            (defvar ,source
-             (helm-make-source ,(concat "Recoll " name " (press C-c ? for query help)")
+             (helm-make-source ,(concat "Recoll " name)
                  'helm-recoll-source :confdir ,dir))
            (put ',source 'variable-documentation (format "\
 Source for retrieving files matching the current input pattern
