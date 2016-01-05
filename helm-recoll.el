@@ -13,7 +13,7 @@
 ;; URL: https://github.com/emacs-helm/helm-recoll
 ;; Keywords: convenience
 ;; Compatibility: GNU Emacs >= 24.3
-;; Version: 0.2
+;; Version: 0.3
 ;; Package-Requires: ((helm "1.7.7"))
 ;;
 ;; Features that might be required by this library:
