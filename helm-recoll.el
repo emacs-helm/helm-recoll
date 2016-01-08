@@ -39,7 +39,10 @@
 ;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ;;; Commentary:
-;;  ===========
+;;
+;; Helm interface for the recoll desktop search tool.
+
+;;; Use:
 ;;
 ;; You need to create some helm-recoll sources before you can use them.
 ;; You can create sources using the `helm-recoll-create-source' function,
@@ -53,7 +56,6 @@
 ;;   (helm :sources '(helm-source-recoll-docs helm-source-recoll-progs))
 
 ;;; Installation:
-;;  =============
 ;;
 ;; Add code to your init (~/.emacs) file to create some sources (see above),
 ;; and then add a require statement for the library:
