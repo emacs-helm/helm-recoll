@@ -13,8 +13,8 @@
 ;; URL: https://github.com/emacs-helm/helm-recoll
 ;; Keywords: convenience
 ;; Compatibility: GNU Emacs >= 24.3
-;; Version: 0.3
-;; Package-Requires: ((helm "1.7.7"))
+;; Version: 0.4
+;; Package-Requires: ((helm "1.9.5"))
 ;;
 ;; Features that might be required by this library:
 ;;
@@ -88,7 +88,7 @@ config directory can be passed as a argument to `helm-recoll-create-source'")
 Enter one of the following options before your query to specify the query type:
 
 -l      advanced search query (default, see next section)
--f      file name search query
+-f      (exact) file name search query
 -a      all words search query (matches if document contains all the words)
 -o      any words search query (matches if document contains any of the words)
 
