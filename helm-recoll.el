@@ -13,7 +13,7 @@
 ;; URL: https://github.com/emacs-helm/helm-recoll
 ;; Keywords: convenience
 ;; Compatibility: GNU Emacs >= 24.3
-;; Version: 0.4
+;; Version: 0.4.1
 ;; Package-Requires: ((helm "1.9.5"))
 ;;
 ;; Features that might be required by this library:
@@ -280,7 +280,6 @@ The first argument NAME is a string.  Define a source variable
 named `helm-source-recoll-NAME' and a command named
 `helm-recoll-NAME'.  CONFDIR is the path to the config directory
 which recoll should use."
-  (require 'helm-mode)
   (let ((source  (intern (concat "helm-source-recoll-" name)))
         (command (intern (concat "helm-recoll-" name))))
     `(progn
