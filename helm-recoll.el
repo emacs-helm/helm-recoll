@@ -304,7 +304,7 @@ using recoll with the configuration in \"%s\"." confdir))))
 
 (defcustom helm-recoll-directories nil
   "Alist of (name . directory) where to build a recoll source.
-A command to call directly this source will be used also.
+A command to call directly this source will be created also.
 The source will be called helm-source-recoll-<name> and the command
 helm-recoll-<name>."
   :group 'helm-recoll
