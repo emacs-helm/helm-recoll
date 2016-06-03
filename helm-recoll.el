@@ -45,21 +45,23 @@
 ;;; Use:
 ;;
 ;; You need to create some helm-recoll sources before you can use them.
-;; You can create sources using the `helm-recoll-create-source' function,
-;; e.g. like this:
-;;  (helm-recoll-create-source "docs" "~/.recoll/docs")
-;;  (helm-recoll-create-source "progs" "~/.recoll/progs")
+;; You can create sources by customizing `helm-recoll-directories'.
 ;;
-;; Press C-c ? in the helm buffer to see information about how to query recoll
-
-;; Then you can use the sources in helm like this:
-;;   (helm :sources '(helm-source-recoll-docs helm-source-recoll-progs))
+;; Then just call M-x helm-recoll; 
 
 ;;; Installation:
 ;;
-;; Add code to your init (~/.emacs) file to create some sources (see above),
-;; and then add a require statement for the library:
-;;   (eval-when-compile (require 'helm-recoll nil t))
+;; After customizing `helm-recoll-directories' (see above)
+;; just require helm-recoll or even better autoload the helm-recoll
+;; function.
+;; If you use use-package you can use e.g
+;;
+;;     (use-package helm-recoll
+;;         :commands helm-recoll
+;;         :init (setq helm-recoll-directories
+;;                     '(("confdir" . "~/.emacs.d")
+;;                       ("lisp sources" . "~/elisp")
+;;                       ("work" . "~/work"))))
 
 ;;; Code:
 
@@ -301,7 +303,10 @@ Source for retrieving files matching the current input pattern
 using recoll with the configuration in \"%s\"." confdir))))
 
 (defcustom helm-recoll-directories nil
-  "List of recoll directories."
+  "Alist of (name . directory) where to build a recoll source.
+A command to call directly this source will be used also.
+The source will be called helm-source-recoll-<name> and the command
+helm-recoll-<name>."
   :group 'helm-recoll
   :type '(alist :key-type string :value-type string)
   :set 'helm-recoll-build-sources)
