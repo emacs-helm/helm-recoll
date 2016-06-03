@@ -42,26 +42,39 @@
 ;;
 ;; Helm interface for the recoll desktop search tool.
 
-;;; Use:
+;;; Create recoll indexes:
 ;;
-;; You need to create some helm-recoll sources before you can use them.
+;; First you have to create an index for each directory you want
+;; to index, for this create some directories like "~/.recoll-<your-directory-name>"
+;; then create "recoll.conf" config files in each directory containing
+;; topdirs = <full/path/to/your/directory>
+;; then run recollindex -c ~/.recoll-<your-directory-name>
+;; to create index for each directory.
+;; See https://bitbucket.org/medoc/recoll/wiki/MultipleIndexes
+;; for more infos.
+
+;;; Configure:
+;;
+;; Then you need to create some helm-recoll sources before you can use them.
 ;; You can create sources by customizing `helm-recoll-directories'.
-;;
-;; Then just call M-x helm-recoll; 
+
+;; Then just call M-x helm-recoll
+;; will build a specific command for each directory and the specific sources for
+;; these directories.
 
 ;;; Installation:
 ;;
 ;; After customizing `helm-recoll-directories' (see above)
-;; just require helm-recoll or even better autoload the helm-recoll
+;; just require helm-recoll or even better autoload the `helm-recoll'
 ;; function.
 ;; If you use use-package you can use e.g
 ;;
 ;;     (use-package helm-recoll
 ;;         :commands helm-recoll
 ;;         :init (setq helm-recoll-directories
-;;                     '(("confdir" . "~/.emacs.d")
-;;                       ("lisp sources" . "~/elisp")
-;;                       ("work" . "~/work"))))
+;;                     '(("confdir" . "~/.recoll-.emacs.d")
+;;                       ("lisp sources" . "~/.recoll-elisp")
+;;                       ("work" . "~/.recoll-work"))))
 
 ;;; Code:
 
