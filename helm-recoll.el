@@ -273,33 +273,38 @@ For more details see:
    (nohighlight :initform t)
    (action-transformer :initform #'helm-recoll-source-action-transformer)))
 
-;;;###autoload
-(defmacro helm-recoll-create-source (name confdir)
+(defun helm-recoll-build-sources (var value)
+  (set var value)
+  (cl-loop for (n . d) in value
+           do (helm-recoll-create-source n d)))
+
+(defun helm-recoll-create-source (name confdir)
   "Create helm source and associated functions for recoll search results.
 The first argument NAME is a string.  Define a source variable
 named `helm-source-recoll-NAME' and a command named
 `helm-recoll-NAME'.  CONFDIR is the path to the config directory
 which recoll should use."
-  (let ((source  (intern (concat "helm-source-recoll-" name)))
-        (command (intern (concat "helm-recoll-" name))))
-    `(progn
-       (defun ,command ()
-         ,(format "Search \"%s\" recoll database." name)
-         (interactive)
-         (require 'helm-recoll)
-         (helm :sources ',source
-               :keymap helm-recoll-map
-               :history 'helm-recoll-history
-               :buffer helm-recoll-sources-buffer))
-       (with-eval-after-load 'helm-recoll
-         ,(macroexp-let2 nil dir `(expand-file-name ,confdir)
-            `(progn
-               (defvar ,source
-                 (helm-make-source ,(concat "Recoll " name)
-                     'helm-recoll-source :confdir ,dir))
-               (put ',source 'variable-documentation (format "\
+  (let ((source  (intern (concat "helm-source-recoll-" name))))
+    (defalias (intern (concat "helm-recoll-" name))
+        (lambda ()
+          (interactive)
+          (require 'helm-recoll)
+          (helm :sources source
+                :keymap helm-recoll-map
+                :history 'helm-recoll-history
+                :buffer helm-recoll-sources-buffer)))
+    (set source
+         (helm-make-source (concat "Recoll " name)
+             'helm-recoll-source :confdir (expand-file-name confdir)))
+    (put source 'variable-documentation (format "\
 Source for retrieving files matching the current input pattern
-using recoll with the configuration in \"%s\"." ,dir))))))))
+using recoll with the configuration in \"%s\"." confdir))))
+
+(defcustom helm-recoll-directories nil
+  "List of recoll directories."
+  :group 'helm-recoll
+  :type '(alist :key-type string :value-type string)
+  :set 'helm-recoll-build-sources)
 
 (defclass helm-recoll-sources (helm-source-sync)
   ((candidate-number-limit :initform 9999)
