@@ -287,19 +287,11 @@ which recoll should use."
          ,(format "Search \"%s\" recoll database." name)
          (interactive)
          (require 'helm-recoll)
-         (helm :sources ',source
+         (helm :sources (helm-make-source ,(concat "Recoll " name)
+                            'helm-recoll-source :confdir ,(expand-file-name confdir))
                :keymap helm-recoll-map
                :history 'helm-recoll-history
-               :buffer helm-recoll-sources-buffer))
-       (with-eval-after-load 'helm-recoll
-         ,(macroexp-let2 nil dir `(expand-file-name ,confdir)
-            `(progn
-               (defvar ,source
-                 (helm-make-source ,(concat "Recoll " name)
-                     'helm-recoll-source :confdir ,dir))
-               (put ',source 'variable-documentation (format "\
-Source for retrieving files matching the current input pattern
-using recoll with the configuration in \"%s\"." ,dir))))))))
+               :buffer helm-recoll-sources-buffer)))))
 
 (defclass helm-recoll-sources (helm-source-sync)
   ((candidate-number-limit :initform 9999)
