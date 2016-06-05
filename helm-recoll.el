@@ -313,7 +313,8 @@ which recoll should use."
              'helm-recoll-source :confdir (expand-file-name confdir)))
     (put source 'variable-documentation (format "\
 Source for retrieving files matching the current input pattern
-using recoll with the configuration in \"%s\"." confdir))))
+using recoll with the configuration in \"%s\"." confdir))
+    source))
 
 (defcustom helm-recoll-directories nil
   "Alist of (name . directory) where to build a recoll source.
