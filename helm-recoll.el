@@ -13,7 +13,7 @@
 ;; URL: https://github.com/emacs-helm/helm-recoll
 ;; Keywords: convenience
 ;; Compatibility: GNU Emacs >= 24.3
-;; Version: 0.4.1
+;; Version: 0.4.2
 ;; Package-Requires: ((helm "1.9.5"))
 ;;
 ;; Features that might be required by this library:
@@ -83,10 +83,16 @@
 (require 'helm)
 (require 'helm-files)
 
-(defvar helm-recoll-options '("recoll" "-t" "-b")
+(defgroup helm-recoll ()
+  "Helm interface for the recoll desktop search tool"
+  :group 'convenience
+  :prefix "helm-recoll")
+
+(defcustom helm-recoll-options '("recoll" "-t" "-b")
   "A list where the `car' is the name of the recoll program followed by options.
 You do not need to include the -c option since this is already included, and the
-config directory can be passed as a argument to `helm-recoll-create-source'")
+config directory can be passed as a argument to `helm-recoll-create-source'."
+  :type '(repeat string))
 
 (defvar helm-recoll-sources-buffer "*helm recoll source select*")
 
@@ -293,6 +299,7 @@ For more details see:
   (cl-loop for (n . d) in value
            do (helm-recoll-create-source n d)))
 
+;;;###autoload
 (defun helm-recoll-create-source (name confdir)
   "Create helm source and associated functions for recoll search results.
 The first argument NAME is a string.  Define a source variable
@@ -321,8 +328,8 @@ using recoll with the configuration in \"%s\"." confdir))
 A command to call directly this source will be created also.
 The source will be called helm-source-recoll-<name> and the command
 helm-recoll-<name>."
-  :group 'helm-recoll
-  :type '(alist :key-type string :value-type string)
+  :type '(alist :key-type   (string :tag "Source name")
+                :value-type (string :tag "Configuration directory"))
   :set 'helm-recoll-build-sources)
 
 (defclass helm-recoll-sources (helm-source-sync)
