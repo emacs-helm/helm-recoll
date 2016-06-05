@@ -42,24 +42,39 @@
 ;;
 ;; Helm interface for the recoll desktop search tool.
 
-;;; Use:
+;;; Create recoll indexes:
 ;;
-;; You need to create some helm-recoll sources before you can use them.
-;; You can create sources using the `helm-recoll-create-source' function,
-;; e.g. like this:
-;;  (helm-recoll-create-source "docs" "~/.recoll/docs")
-;;  (helm-recoll-create-source "progs" "~/.recoll/progs")
-;;
-;; Press C-c ? in the helm buffer to see information about how to query recoll
+;; First you have to create an index for each directory you want
+;; to index, for this create some directories like "~/.recoll-<your-directory-name>"
+;; then create "recoll.conf" config files in each directory containing
+;; topdirs = <full/path/to/your/directory>
+;; then run recollindex -c ~/.recoll-<your-directory-name>
+;; to create index for each directory.
+;; See https://bitbucket.org/medoc/recoll/wiki/MultipleIndexes
+;; for more infos.
 
-;; Then you can use the sources in helm like this:
-;;   (helm :sources '(helm-source-recoll-docs helm-source-recoll-progs))
+;;; Configure:
+;;
+;; Then you need to create some helm-recoll sources before you can use them.
+;; You can create sources by customizing `helm-recoll-directories'.
+
+;; Then just call M-x helm-recoll
+;; will build a specific command for each directory and the specific sources for
+;; these directories.
 
 ;;; Installation:
 ;;
-;; Add code to your init (~/.emacs) file to create some sources (see above),
-;; and then add a require statement for the library:
-;;   (eval-when-compile (require 'helm-recoll nil t))
+;; After customizing `helm-recoll-directories' (see above)
+;; just require helm-recoll or even better autoload the `helm-recoll'
+;; function.
+;; If you use use-package you can use e.g
+;;
+;;     (use-package helm-recoll
+;;         :commands helm-recoll
+;;         :init (setq helm-recoll-directories
+;;                     '(("confdir" . "~/.recoll-.emacs.d")
+;;                       ("lisp sources" . "~/.recoll-elisp")
+;;                       ("work" . "~/.recoll-work"))))
 
 ;;; Code:
 
@@ -273,33 +288,41 @@ For more details see:
    (nohighlight :initform t)
    (action-transformer :initform #'helm-recoll-source-action-transformer)))
 
-;;;###autoload
-(defmacro helm-recoll-create-source (name confdir)
+(defun helm-recoll-build-sources (var value)
+  (set var value)
+  (cl-loop for (n . d) in value
+           do (helm-recoll-create-source n d)))
+
+(defun helm-recoll-create-source (name confdir)
   "Create helm source and associated functions for recoll search results.
 The first argument NAME is a string.  Define a source variable
 named `helm-source-recoll-NAME' and a command named
 `helm-recoll-NAME'.  CONFDIR is the path to the config directory
 which recoll should use."
-  (let ((source  (intern (concat "helm-source-recoll-" name)))
-        (command (intern (concat "helm-recoll-" name))))
-    `(progn
-       (defun ,command ()
-         ,(format "Search \"%s\" recoll database." name)
-         (interactive)
-         (require 'helm-recoll)
-         (helm :sources ',source
-               :keymap helm-recoll-map
-               :history 'helm-recoll-history
-               :buffer helm-recoll-sources-buffer))
-       (with-eval-after-load 'helm-recoll
-         ,(macroexp-let2 nil dir `(expand-file-name ,confdir)
-            `(progn
-               (defvar ,source
-                 (helm-make-source ,(concat "Recoll " name)
-                     'helm-recoll-source :confdir ,dir))
-               (put ',source 'variable-documentation (format "\
+  (let ((source  (intern (concat "helm-source-recoll-" name))))
+    (defalias (intern (concat "helm-recoll-" name))
+        (lambda ()
+          (interactive)
+          (require 'helm-recoll)
+          (helm :sources source
+                :keymap helm-recoll-map
+                :history 'helm-recoll-history
+                :buffer helm-recoll-sources-buffer)))
+    (set source
+         (helm-make-source (concat "Recoll " name)
+             'helm-recoll-source :confdir (expand-file-name confdir)))
+    (put source 'variable-documentation (format "\
 Source for retrieving files matching the current input pattern
-using recoll with the configuration in \"%s\"." ,dir))))))))
+using recoll with the configuration in \"%s\"." confdir))))
+
+(defcustom helm-recoll-directories nil
+  "Alist of (name . directory) where to build a recoll source.
+A command to call directly this source will be created also.
+The source will be called helm-source-recoll-<name> and the command
+helm-recoll-<name>."
+  :group 'helm-recoll
+  :type '(alist :key-type string :value-type string)
+  :set 'helm-recoll-build-sources)
 
 (defclass helm-recoll-sources (helm-source-sync)
   ((candidate-number-limit :initform 9999)
