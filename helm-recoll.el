@@ -12,9 +12,9 @@
 ;; Description: helm interface for the recoll desktop search tool.
 ;; URL: https://github.com/emacs-helm/helm-recoll
 ;; Keywords: convenience
-;; Compatibility: GNU Emacs >= 24.3
-;; Version: 0.4.2
-;; Package-Requires: ((helm "1.9.5"))
+;; Compatibility: GNU Emacs >= 24.4
+;; Version: 0.5
+;; Package-Requires: ((helm "1.9.9"))
 ;;
 ;; Features that might be required by this library:
 ;;
@@ -40,7 +40,9 @@
 
 ;;; Commentary:
 ;;
-;; Helm interface for the recoll desktop search tool.
+;; Helm interface for the recoll [1] desktop search tool.
+;;
+;; [1] http://www.lesbonscomptes.com/recoll/
 
 ;;; Create recoll indexes:
 ;;
