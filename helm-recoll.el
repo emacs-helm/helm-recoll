@@ -295,7 +295,6 @@ For more details see:
    (filter-one-by-one :initform #'helm-recoll-filter-one-by-one)
    (candidates-process :initform #'helm-recoll--candidates-process)
    (help-message :initform helm-recoll-help-message)
-   (keymap :initform helm-recoll-map)
    (requires-pattern :initform 3)
    (history :initform helm-recoll-history)
    (candidate-number-limit :initform 9999)
