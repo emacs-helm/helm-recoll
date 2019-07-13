@@ -93,7 +93,7 @@
   :group 'convenience
   :prefix "helm-recoll")
 
-(defcustom helm-recoll-options '("recoll" "-t" "-b")
+(defcustom helm-recoll-options '("recoll" "-t")
   "A list where the `car' is the name of the recoll program followed by options.
 You do not need to include the -c option since this is already included, and the
 config directory can be passed as a argument to `helm-recoll-create-source'."
@@ -233,8 +233,9 @@ For more details see:
 
 (defun helm-recoll-action-make-links (_candidate)
   "Make symlinks to the selected candidates."
-  (let ((dir (ido-read-directory-name "Dir in which to place symlinks: ")))
-    (dolist (item (helm-marked-candidates))
+  (let ((items (helm-marked-candidates))
+        (dir (read-directory-name "Dir in which to place symlinks: ")))
+    (dolist (item items)
       (condition-case err
           (make-symbolic-link item (concat dir (file-name-nondirectory item)) 1)
         (error (message "%s" (error-message-string err)))))))
@@ -257,7 +258,7 @@ For more details see:
   (setq confdir (or confdir (helm-attr 'confdir)))
   (let ((process-connection-type nil))
     (prog1 (apply #'start-process "recoll-process" helm-buffer
-                  (append helm-recoll-options (list "-c" confdir) (split-string  helm-pattern " ")))
+                  (append helm-recoll-options (list "-c" confdir) (list "-q" helm-pattern)))
       (set-process-sentinel
        (get-process "recoll-process")
        (lambda (_process event)
