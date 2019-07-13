@@ -83,6 +83,7 @@
 (eval-when-compile
   (require 'cl-lib))
 (require 'helm)
+(require 'helm-for-files)
 
 (defvar helm-find-files-actions)
 (defvar helm-find-files-map)
@@ -277,9 +278,16 @@ For more details see:
            (helm-log "Error: Recoll %s"
                      (replace-regexp-in-string "\n" "" event))))))))
 
+;; text/x-emacs-lisp	[file:///home/thierry/elisp/Emacs-wgrep/wgrep-helm.el]	[wgrep-helm.el]	3556	bytes	
 (defun helm-recoll-filter-one-by-one (file)
   "Function used as filter-one-by-one by `helm-recoll-source'."
-  (replace-regexp-in-string "\\`file://" "" (if (consp file) (cdr file) file)))
+  (when (string-match "\\`\\(.*\\)\\(\\s-+\\)\\(\\[file://\\)\\([^]]+\\)\\(\\]\\)" file)
+    (match-string 4 file)))
+
+(defun helm-recoll-filtered-transformer (candidates _source)
+  (cl-loop for c in candidates
+           for candidate = (helm-recoll-filter-one-by-one c)
+           when candidate collect it))
 
 (defclass helm-recoll-override-inheritor (helm-type-file) ())
 
@@ -287,7 +295,6 @@ For more details see:
   ((confdir :initarg :confdir
             :initform nil
             :custom 'file)
-   (filter-one-by-one :initform #'helm-recoll-filter-one-by-one)
    (candidates-process :initform #'helm-recoll--candidates-process)
    (help-message :initform helm-recoll-help-message)
    (requires-pattern :initform 3)
@@ -297,11 +304,15 @@ For more details see:
 
 (defmethod helm--setup-source :after ((source helm-recoll-override-inheritor))
   (let ((actions (slot-value source 'action)))
+    (setf (slot-value source 'filtered-candidate-transformer)
+          '(helm-recoll-filtered-transformer helm-highlight-files))
+    (setf (slot-value source 'action-transformer) nil)
     (setf (slot-value source 'action)
-          (helm-append-at-nth (symbol-value actions)
-                              '(("Run helm with selected candidates" . helm-recoll-action-require-helm)
-                                ("Make link to file(s)" . helm-recoll-action-make-links))
-                              1))))
+          (helm-append-at-nth
+           (symbol-value actions)
+           '(("Run helm with selected candidates" . helm-recoll-action-require-helm)
+             ("Make link to file(s)" . helm-recoll-action-make-links))
+           1))))
 
 (defun helm-recoll-build-sources (var value)
   (set var value)
