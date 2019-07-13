@@ -280,15 +280,9 @@ For more details see:
   "Function used as filter-one-by-one by `helm-recoll-source'."
   (replace-regexp-in-string "\\`file://" "" (if (consp file) (cdr file) file)))
 
-(defun helm-recoll-source-action-transformer (actions _candidate)
-  "Default action-transformer of the `helm-recoll-source' class."
-  (helm-append-at-nth
-   actions
-   '(("Run helm with selected candidates" . helm-recoll-action-require-helm)
-     ("Make link to file(s)" . helm-recoll-action-make-links))
-   1))
+(defclass helm-recoll-override-inheritor (helm-type-file))
 
-(defclass helm-recoll-source (helm-source-async helm-type-file)
+(defclass helm-recoll-source (helm-source-async helm-recoll-override-inheritor)
   ((confdir :initarg :confdir
             :initform nil
             :custom 'file)
@@ -298,8 +292,15 @@ For more details see:
    (requires-pattern :initform 3)
    (history :initform helm-recoll-history)
    (candidate-number-limit :initform 9999)
-   (nohighlight :initform t)
-   (action-transformer :initform #'helm-recoll-source-action-transformer)))
+   (nohighlight :initform t)))
+
+(defmethod helm--setup-source :after ((source helm-recoll-override-inheritor))
+  (let ((actions (slot-value source 'action)))
+    (setf (slot-value source 'action)
+          (helm-append-at-nth actions
+                              '(("Run helm with selected candidates" . helm-recoll-action-require-helm)
+                                ("Make link to file(s)" . helm-recoll-action-make-links))
+                              1))))
 
 (defun helm-recoll-build-sources (var value)
   (set var value)
