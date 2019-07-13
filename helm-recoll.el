@@ -85,10 +85,6 @@
 (require 'helm)
 (require 'helm-for-files)
 
-(defvar helm-find-files-actions)
-(defvar helm-find-files-map)
-(defvar helm-ff-help-message)
-
 (defgroup helm-recoll ()
   "Helm interface for the recoll desktop search tool"
   :group 'convenience
@@ -225,30 +221,8 @@ For more details see:
 (defvar helm-recoll-map
   (let ((map (make-sparse-keymap)))
     (set-keymap-parent map helm-find-files-map)
-    ;; Useless for help message, but maybe will be used later
-    ;; (define-key map (kbd "C-c ?")    'helm-recoll-help)
     map)
   "Keymap used in recoll sources.")
-
-;;; Actions
-
-(defun helm-recoll-action-make-links (_candidate)
-  "Make symlinks to the selected candidates."
-  (let ((items (helm-marked-candidates))
-        (dir (read-directory-name "Dir in which to place symlinks: ")))
-    (dolist (item items)
-      (condition-case err
-          (make-symbolic-link item (concat dir (file-name-nondirectory item)) 1)
-        (error (message "%s" (error-message-string err)))))))
-
-(defun helm-recoll-action-require-helm (_candidate)
-  "Invoke helm with selected candidates."
-  (require 'helm-files)
-  (helm :sources (helm-build-sync-source "Select"
-		   :candidates (helm-marked-candidates)
-		   :keymap helm-find-files-map
-		   :fuzzy-match t
-		   :action helm-find-files-actions)))
 
 ;;; Main
 
@@ -286,6 +260,7 @@ For more details see:
            (helm-log "Error: Recoll %s"
                      (replace-regexp-in-string "\n" "" event))))))))
 
+;; As of Version: 1.22.4-1:
 ;; text/x-emacs-lisp	[file:///home/thierry/elisp/Emacs-wgrep/wgrep-helm.el]	[wgrep-helm.el]	3556	bytes	
 (defun helm-recoll-filter-one-by-one (file)
   "Function used as filter-one-by-one by `helm-recoll-source'."
@@ -311,16 +286,9 @@ For more details see:
    (nohighlight :initform t)))
 
 (defmethod helm--setup-source :after ((source helm-recoll-override-inheritor))
-  (let ((actions (slot-value source 'action)))
-    (setf (slot-value source 'filtered-candidate-transformer)
-          '(helm-recoll-filtered-transformer helm-highlight-files))
-    (setf (slot-value source 'action-transformer) nil)
-    (setf (slot-value source 'action)
-          (helm-append-at-nth
-           (symbol-value actions)
-           '(("Run helm with selected candidates" . helm-recoll-action-require-helm)
-             ("Make link to file(s)" . helm-recoll-action-make-links))
-           1))))
+  (setf (slot-value source 'filtered-candidate-transformer)
+        '(helm-recoll-filtered-transformer helm-highlight-files))
+  (setf (slot-value source 'action-transformer) nil))
 
 (defun helm-recoll-build-sources (var value)
   (set var value)
