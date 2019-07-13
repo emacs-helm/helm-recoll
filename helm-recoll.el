@@ -280,7 +280,7 @@ For more details see:
   "Function used as filter-one-by-one by `helm-recoll-source'."
   (replace-regexp-in-string "\\`file://" "" (if (consp file) (cdr file) file)))
 
-(defclass helm-recoll-override-inheritor (helm-type-file))
+(defclass helm-recoll-override-inheritor (helm-type-file) ())
 
 (defclass helm-recoll-source (helm-source-async helm-recoll-override-inheritor)
   ((confdir :initarg :confdir
