@@ -239,26 +239,27 @@ For more details see:
 (defun helm-recoll--candidates-process (&optional confdir)
   "Function used as candidates-process by `helm-recoll-source'."
   (setq confdir (or confdir (helm-attr 'confdir)))
-  (let ((process-connection-type nil))
-    (prog1 (apply #'start-process "recoll-process" helm-buffer
-                  (helm-recoll--setup-cmd confdir))
-      (set-process-sentinel
-       (get-process "recoll-process")
-       (lambda (_process event)
-         (if (string= event "finished\n")
-             (with-helm-window
-               (setq mode-line-format
-                     '(" " mode-line-buffer-identification " "
-                       (line-number-mode "%l") " "
-                       (:eval (propertize
-                               (format "[Recoll Process Finish- (%s results)]"
-                                       (max (1- (count-lines
-                                                 (point-min) (point-max)))
-                                            0))
-                               'face 'helm-grep-finish))))
-               (force-mode-line-update))
-           (helm-log "Error: Recoll %s"
-                     (replace-regexp-in-string "\n" "" event))))))))
+  (let (process-connection-type proc)
+    (setq proc (apply #'start-process "recoll-process" helm-buffer
+                      (helm-recoll--setup-cmd confdir)))
+    (set-process-sentinel
+     proc
+     (lambda (_process event)
+       (if (string= event "finished\n")
+           (with-helm-window
+             (setq mode-line-format
+                   '(" " mode-line-buffer-identification " "
+                     (line-number-mode "%l") " "
+                     (:eval (propertize
+                             (format "[Recoll Process Finish- (%s results)]"
+                                     (max (1- (count-lines
+                                               (point-min) (point-max)))
+                                          0))
+                             'face 'helm-grep-finish))))
+             (force-mode-line-update))
+         (helm-log "Error: Recoll %s"
+                   (replace-regexp-in-string "\n" "" event)))))
+    proc))
 
 ;; As of Version: 1.22.4-1:
 ;; text/x-emacs-lisp	[file:///home/thierry/elisp/Emacs-wgrep/wgrep-helm.el]	[wgrep-helm.el]	3556	bytes	
