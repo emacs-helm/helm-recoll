@@ -239,27 +239,9 @@ For more details see:
 (defun helm-recoll--candidates-process (&optional confdir)
   "Function used as candidates-process by `helm-recoll-source'."
   (setq confdir (or confdir (helm-attr 'confdir)))
-  (let (process-connection-type proc)
-    (setq proc (apply #'start-process "recoll-process" helm-buffer
-                      (helm-recoll--setup-cmd confdir)))
-    (set-process-sentinel
-     proc
-     (lambda (_process event)
-       (if (string= event "finished\n")
-           (with-helm-window
-             (setq mode-line-format
-                   '(" " mode-line-buffer-identification " "
-                     (line-number-mode "%l") " "
-                     (:eval (propertize
-                             (format "[Recoll Process Finish- (%s results)]"
-                                     (max (1- (count-lines
-                                               (point-min) (point-max)))
-                                          0))
-                             'face 'helm-grep-finish))))
-             (force-mode-line-update))
-         (helm-log "Error: Recoll %s"
-                   (replace-regexp-in-string "\n" "" event)))))
-    proc))
+  (with-temp-buffer
+    (apply #'call-process "recoll" nil t nil (cdr (helm-recoll--setup-cmd confdir)))
+    (split-string (buffer-string) "\n")))
 
 ;; As of Version: 1.22.4-1:
 ;; text/x-emacs-lisp	[file:///home/thierry/elisp/Emacs-wgrep/wgrep-helm.el]	[wgrep-helm.el]	3556	bytes	
@@ -275,11 +257,12 @@ For more details see:
 
 (defclass helm-recoll-override-inheritor (helm-type-file) ())
 
-(defclass helm-recoll-source (helm-source-async helm-recoll-override-inheritor)
+(defclass helm-recoll-source (helm-source-sync helm-recoll-override-inheritor)
   ((confdir :initarg :confdir
             :initform nil
             :custom 'file)
-   (candidates-process :initform #'helm-recoll--candidates-process)
+   (candidates :initform #'helm-recoll--candidates-process)
+   (volatile :initform t)
    (requires-pattern :initform 3)
    (help-message :initform helm-recoll-help-message)
    (history :initform helm-recoll-history)
