@@ -83,7 +83,10 @@
 (eval-when-compile
   (require 'cl-lib))
 (require 'helm)
-(require 'helm-files)
+
+(defvar helm-find-files-actions)
+(defvar helm-find-files-map)
+(defvar helm-ff-help-message)
 
 (defgroup helm-recoll ()
   "Helm interface for the recoll desktop search tool"
@@ -238,6 +241,7 @@ For more details see:
 
 (defun helm-recoll-action-require-helm (_candidate)
   "Invoke helm with selected candidates."
+  (require 'helm-files)
   (helm :sources (helm-build-sync-source "Select"
 		   :candidates (helm-marked-candidates)
 		   :help-message helm-ff-help-message
@@ -276,13 +280,15 @@ For more details see:
   "Function used as filter-one-by-one by `helm-recoll-source'."
   (replace-regexp-in-string "\\`file://" "" (if (consp file) (cdr file) file)))
 
-(defun helm-recoll-source-action-transformer (&rest _)
+(defun helm-recoll-source-action-transformer (actions _candidate)
   "Default action-transformer of the `helm-recoll-source' class."
-  `(("Run helm with selected candidates" . helm-recoll-action-require-helm)
-    ,@helm-type-file-actions
-    ("Make link to file(s)" . helm-recoll-action-make-links)))
+  (helm-append-at-nth
+   actions
+   '(("Run helm with selected candidates" . helm-recoll-action-require-helm)
+     ("Make link to file(s)" . helm-recoll-action-make-links))
+   1))
 
-(defclass helm-recoll-source (helm-source-async)
+(defclass helm-recoll-source (helm-source-async helm-type-file)
   ((confdir :initarg :confdir
             :initform nil
             :custom 'file)
@@ -347,8 +353,10 @@ helm-recoll-<name>."
                            (helm :sources (helm-marked-candidates)
                                  :buffer helm-recoll-sources-buffer
                                  :keymap helm-recoll-map)))
-                       ("Describe variable" . describe-variable)))
-   (persistent-action :initform #'describe-variable)))
+                       ("Describe variable" . helm-describe-variable)))
+   (persistent-action :initform (lambda (candidate)
+                                  (helm-elisp--persistent-help
+                                   candidate 'helm-describe-variable)))))
 
 (defvar helm-recoll-sources-source
   (helm-make-source "helm-recoll sources" 'helm-recoll-sources)
