@@ -264,7 +264,7 @@ For more details see:
 ;; As of Version: 1.22.4-1:
 ;; text/x-emacs-lisp	[file:///home/thierry/elisp/Emacs-wgrep/wgrep-helm.el]	[wgrep-helm.el]	3556	bytes	
 (defun helm-recoll-filter-one-by-one (file)
-  "Function used as filter-one-by-one by `helm-recoll-source'."
+  "Strip out all garbage provided by recoll."
   (when (string-match "\\`\\(.*\\)\\(\\s-+\\)\\(\\[file://\\)\\([^]]+\\)\\(\\]\\)" file)
     (match-string 4 file)))
 
