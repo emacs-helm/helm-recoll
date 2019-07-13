@@ -248,6 +248,7 @@ For more details see:
 (defun helm-recoll-filter-one-by-one (file)
   "Strip out all garbage provided by recoll."
   (when (string-match "\\`\\(.*\\)\\(\\s-+\\)\\(\\[file://\\)\\([^]]+\\)\\(\\]\\)" file)
+    ;; FIXME: Should I filter out directories from 1th group (inode/directory)?
     (match-string 4 file)))
 
 (defun helm-recoll-filtered-transformer (candidates _source)
