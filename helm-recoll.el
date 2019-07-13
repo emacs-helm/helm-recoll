@@ -297,7 +297,7 @@ For more details see:
 (defmethod helm--setup-source :after ((source helm-recoll-override-inheritor))
   (let ((actions (slot-value source 'action)))
     (setf (slot-value source 'action)
-          (helm-append-at-nth actions
+          (helm-append-at-nth (symbol-value actions)
                               '(("Run helm with selected candidates" . helm-recoll-action-require-helm)
                                 ("Make link to file(s)" . helm-recoll-action-make-links))
                               1))))
