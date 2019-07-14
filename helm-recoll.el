@@ -216,14 +216,6 @@ For more details see:
 
     http://www.lesbonscomptes.com/recoll/usermanual/RCL.SEARCH.LANG.html ")
 
-;;; Keymap
-
-(defvar helm-recoll-map
-  (let ((map (make-sparse-keymap)))
-    (set-keymap-parent map helm-find-files-map)
-    map)
-  "Keymap used in recoll sources.")
-
 ;;; Main
 
 (defun helm-recoll--setup-cmd (dir)
@@ -293,7 +285,6 @@ which recoll should use."
           (interactive)
           (require 'helm-recoll)
           (helm :sources source
-                :keymap helm-recoll-map
                 :history 'helm-recoll-history
                 :buffer helm-recoll-sources-buffer)))
     (set source
@@ -324,8 +315,7 @@ helm-recoll-<name>."
    (action :initform `(("Invoke helm with selected sources" .
                         ,(lambda (_candidate)
                            (helm :sources (helm-marked-candidates)
-                                 :buffer helm-recoll-sources-buffer
-                                 :keymap helm-recoll-map)))
+                                 :buffer helm-recoll-sources-buffer)))
                        ("Describe variable" . helm-describe-variable)))
    (persistent-action :initform (lambda (candidate)
                                   (helm-elisp--persistent-help
