@@ -119,7 +119,7 @@ Enter one of the following options before your query to specify the query type:
 
 Queries are sequences of terms with implicit AND and explicit OR and NOT (-)
 logical operators. NOT gets priority over OR which gets priority over AND
-(i.e. disjunctive normal form).
+\(i.e. disjunctive normal form).
 
 Terms can be either a word or double quoted phrase to search for in the
 document, or a <FIELD>:<VALUE> pair as listed below. Wildcard (*/?/[]) and
@@ -187,11 +187,11 @@ type:       category as defined in /usr/share/recoll/mimeconf
 
 *** Wildcards & Anchors
 
-*           matches 0 or more characters
-?           matches a single character
-[]          match any character within the square brackets
-^           match the beginning of the document text or field value
-$           match the end of the document text or field value
+\"*\"           matches 0 or more characters
+\"?\"           matches a single character
+\"[]\"          match any character within the square brackets
+\"^\"           match the beginning of the document text or field value
+\"$\"           match the end of the document text or field value
 
 Note: wildcards at the beginning of a word/phrase can slow recoll down a lot
 
@@ -214,7 +214,32 @@ D           turn on diacritics sensitivity (if the index supports it)
 
 For more details see:
 
-    http://www.lesbonscomptes.com/recoll/usermanual/RCL.SEARCH.LANG.html ")
+    http://www.lesbonscomptes.com/recoll/usermanual/RCL.SEARCH.LANG.html
+
+** Commands
+\\<helm-generic-files-map>
+\\[helm-ff-run-toggle-basename]\t\tToggle basename.
+\\[helm-ff-run-grep]\t\tRun grep (`\\[universal-argument]' to recurse).
+\\[helm-ff-run-zgrep]\t\tRun zgrep.
+\\[helm-ff-run-gid]\t\tRun GID (id-utils).
+\\[helm-ff-run-pdfgrep]\t\tRun PDFgrep on marked files.
+\\[helm-ff-run-copy-file]\t\tCopy file(s)
+\\[helm-ff-run-rename-file]\t\tRename file(s).
+\\[helm-ff-run-symlink-file]\t\tSymlink file(s).
+\\[helm-ff-run-hardlink-file]\t\tHardlink file(s).
+\\[helm-ff-run-delete-file]\t\tDelete file(s).
+\\[helm-ff-run-byte-compile-file]\t\tByte compile Elisp file(s) (`\\[universal-argument]' to load).
+\\[helm-ff-run-load-file]\t\tLoad Elisp file(s).
+\\[helm-ff-run-ediff-file]\t\tEdiff file.
+\\[helm-ff-run-ediff-merge-file]\t\tEdiff-merge file.
+\\[helm-ff-run-switch-other-window]\t\tSwitch to other window.
+\\[helm-ff-properties-persistent]\t\tShow file properties.
+\\[helm-ff-run-etags]\t\tRun etags (`\\[universal-argument]' to use tap, `\\[universal-argument] \\[universal-argument]' to reload the database).
+\\[helm-yank-text-at-point]\t\tYank text at point.
+\\[helm-ff-run-open-file-externally]\t\tOpen file with external program (`\\[universal-argument]' to choose).
+\\[helm-ff-run-open-file-with-default-tool]\t\tOpen file externally with default tool.
+\\[helm-ff-run-insert-org-link]\t\tInsert org link.")
+
 
 ;;; Main
 
@@ -257,7 +282,6 @@ For more details see:
    (candidates :initform #'helm-recoll--candidates-process)
    (volatile :initform t)
    (requires-pattern :initform 3)
-   (help-message :initform helm-recoll-help-message)
    (history :initform helm-recoll-history)
    (candidate-number-limit :initform 9999)
    (nohighlight :initform t)))
@@ -265,7 +289,8 @@ For more details see:
 (defmethod helm--setup-source :after ((source helm-recoll-override-inheritor))
   (setf (slot-value source 'filtered-candidate-transformer)
         '(helm-recoll-filtered-transformer helm-highlight-files))
-  (setf (slot-value source 'action-transformer) nil))
+  (setf (slot-value source 'action-transformer) nil)
+  (setf (slot-value source 'help-message) 'helm-recoll-help-message))
 
 (defun helm-recoll-build-sources (var value)
   (set var value)
