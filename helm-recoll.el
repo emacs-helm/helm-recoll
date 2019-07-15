@@ -305,7 +305,7 @@ For more details see:
             :initform nil
             :custom 'file)
    (candidates :initform #'helm-recoll--candidates-process)
-   (volatile :initform t)
+   (match-dynamic :initform t)
    (requires-pattern :initform 3)
    (history :initform helm-recoll-history)
    (candidate-number-limit :initform 9999)
@@ -318,7 +318,6 @@ For more details see:
     (setf (slot-value source 'action-transformer) nil)
     (setf (slot-value source 'help-message) 'helm-recoll-help-message)
     (setf (slot-value source 'keymap) 'helm-recoll-map)
-    (setf (slot-value source 'multimatch) nil)
     (setf (slot-value source 'action)
           (helm-append-at-nth
            (symbol-value actions)
