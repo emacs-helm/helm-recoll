@@ -283,7 +283,7 @@ For more details see:
     (helm-log "Command line used was:\n\n>>>%s" (mapconcat 'identity cmd " "))
     (with-temp-buffer
       (apply #'call-process "recoll" nil t nil (cdr cmd))
-      (split-string (buffer-string) "\n"))))
+      (split-string (buffer-string) "\n" t))))
 
 ;; As of Version: 1.22.4-1:
 ;; text/x-emacs-lisp	[file:///home/thierry/elisp/Emacs-wgrep/wgrep-helm.el]	[wgrep-helm.el]	3556	bytes	
