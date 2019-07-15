@@ -218,7 +218,7 @@ D           turn on diacritics sensitivity (if the index supports it)
 
 For more details see:
 
-    http://www.lesbonscomptes.com/recoll/usermanual/RCL.SEARCH.LANG.html
+    https://www.lesbonscomptes.com/recoll/usermanual/webhelp/docs/index.html
 
 ** Commands
 \\<helm-generic-files-map>
@@ -281,9 +281,10 @@ For more details see:
   (setq confdir (or confdir (helm-attr 'confdir)))
   (let ((cmd (helm-recoll--setup-cmd confdir)))
     (helm-log "Command line used was:\n\n>>>%s" (mapconcat 'identity cmd " "))
-    (with-temp-buffer
-      (apply #'call-process "recoll" nil t nil (cdr cmd))
-      (split-string (buffer-string) "\n" t))))
+    ;; (with-temp-buffer
+    ;;   (apply #'call-process "recoll" nil t nil (cdr cmd))
+    ;;   (split-string (buffer-string) "\n" t))
+    (apply #'process-lines "recoll" (cdr cmd))))
 
 ;; As of Version: 1.22.4-1:
 ;; text/x-emacs-lisp	[file:///home/thierry/elisp/Emacs-wgrep/wgrep-helm.el]	[wgrep-helm.el]	3556	bytes	
