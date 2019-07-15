@@ -85,6 +85,10 @@
 (require 'helm)
 (require 'helm-for-files)
 
+(defvar helm-find-files-actions)
+(defvar helm-find-files-map)
+(defvar helm-ff-help-message)
+
 (defgroup helm-recoll ()
   "Helm interface for the recoll desktop search tool"
   :group 'convenience
@@ -239,6 +243,23 @@ For more details see:
 \\[helm-ff-run-open-file-with-default-tool]\t\tOpen file externally with default tool.
 \\[helm-ff-run-insert-org-link]\t\tInsert org link.")
 
+;;; Keymap
+
+(defvar helm-recoll-map
+  (let ((map (make-sparse-keymap)))
+    (set-keymap-parent map helm-generic-files-map)
+    map))
+
+;;; Actions
+
+(defun helm-recoll-action-require-helm (_candidate)
+  "Invoke helm with selected candidates."
+  (require 'helm-files)
+  (helm :sources (helm-build-sync-source "Select"
+		   :candidates (helm-marked-candidates)
+		   :keymap helm-find-files-map
+		   :fuzzy-match t
+		   :action helm-find-files-actions)))
 
 ;;; Main
 
@@ -255,9 +276,11 @@ For more details see:
 (defun helm-recoll--candidates-process (&optional confdir)
   "Candidates function used by `helm-recoll-source'."
   (setq confdir (or confdir (helm-attr 'confdir)))
-  (with-temp-buffer
-    (apply #'call-process "recoll" nil t nil (cdr (helm-recoll--setup-cmd confdir)))
-    (split-string (buffer-string) "\n")))
+  (let ((cmd (helm-recoll--setup-cmd confdir)))
+    (helm-log "Command line used was:\n\n>>>%s" (mapconcat 'identity cmd " "))
+    (with-temp-buffer
+      (apply #'call-process "recoll" nil t nil (cdr cmd))
+      (split-string (buffer-string) "\n"))))
 
 ;; As of Version: 1.22.4-1:
 ;; text/x-emacs-lisp	[file:///home/thierry/elisp/Emacs-wgrep/wgrep-helm.el]	[wgrep-helm.el]	3556	bytes	
@@ -286,10 +309,17 @@ For more details see:
    (nohighlight :initform t)))
 
 (defmethod helm--setup-source :after ((source helm-recoll-override-inheritor))
-  (setf (slot-value source 'filtered-candidate-transformer)
-        '(helm-recoll-filtered-transformer helm-highlight-files))
-  (setf (slot-value source 'action-transformer) nil)
-  (setf (slot-value source 'help-message) 'helm-recoll-help-message))
+  (let ((actions (slot-value source 'action)))
+    (setf (slot-value source 'filtered-candidate-transformer)
+          '(helm-recoll-filtered-transformer helm-highlight-files))
+    (setf (slot-value source 'action-transformer) nil)
+    (setf (slot-value source 'help-message) 'helm-recoll-help-message)
+    (setf (slot-value source 'keymap) 'helm-recoll-map)
+    (setf (slot-value source 'action)
+          (helm-append-at-nth
+           (symbol-value actions)
+           '(("Run helm with selected candidates" . helm-recoll-action-require-helm))
+           1))))
 
 (defun helm-recoll-build-sources (var value)
   (set var value)
