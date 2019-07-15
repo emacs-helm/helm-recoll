@@ -263,15 +263,18 @@ For more details see:
 
 ;;; Main
 
+(defun helm-recoll--set-pattern-seq (seq)
+  (cl-loop for cand in seq append (list "-q" (shell-quote-argument cand))))
+
 (defun helm-recoll--setup-cmd (dir)
   (let* ((patterns (split-string helm-pattern))
          (option (helm-aand (member (car patterns) '("-l" "-f" "-a" "-o"))
                             (car it)))
-         (pattern (if option (cadr patterns) helm-pattern)))
+         (pattern-seq (if option (cdr patterns) patterns)))
     (append (if option
                 (helm-append-at-nth helm-recoll-options (list option) 1)
               helm-recoll-options)
-            (list "-c" dir) (list "-q" pattern))))
+            (list "-c" dir) (helm-recoll--set-pattern-seq pattern-seq))))
 
 (defun helm-recoll--candidates-process (&optional confdir)
   "Candidates function used by `helm-recoll-source'."
@@ -315,6 +318,7 @@ For more details see:
     (setf (slot-value source 'action-transformer) nil)
     (setf (slot-value source 'help-message) 'helm-recoll-help-message)
     (setf (slot-value source 'keymap) 'helm-recoll-map)
+    (setf (slot-value source 'multimatch) nil)
     (setf (slot-value source 'action)
           (helm-append-at-nth
            (symbol-value actions)
