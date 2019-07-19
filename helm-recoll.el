@@ -263,9 +263,6 @@ For more details see:
 
 ;;; Main
 
-(defun helm-recoll--set-pattern-seq (seq)
-  (cl-loop for cand in seq append (list "-q" (shell-quote-argument cand))))
-
 (defun helm-recoll--setup-cmd (dir)
   (let* ((patterns (split-string helm-pattern))
          (option (helm-aand (member (car patterns) '("-l" "-f" "-a" "-o"))
@@ -274,7 +271,7 @@ For more details see:
     (append (if option
                 (helm-append-at-nth helm-recoll-options (list option) 1)
               helm-recoll-options)
-            (list "-c" dir) (helm-recoll--set-pattern-seq pattern-seq))))
+            (list "-c" dir) (cons "-q" pattern-seq))))
 
 (defun helm-recoll--candidates-process (&optional confdir)
   "Candidates function used by `helm-recoll-source'."
