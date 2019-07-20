@@ -314,7 +314,7 @@ For more details see:
           '(helm-recoll-filtered-transformer helm-highlight-files))
     (setf (slot-value source 'action-transformer) nil)
     (setf (slot-value source 'help-message) 'helm-recoll-help-message)
-    (setf (slot-value source 'keymap) 'helm-recoll-map)
+    (setf (slot-value source 'keymap) helm-recoll-map)
     (setf (slot-value source 'action)
           (helm-append-at-nth
            (symbol-value actions)
