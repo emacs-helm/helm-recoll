@@ -89,3 +89,5 @@ Otherwise add a require statement for the library:
 to your init file (typically ~/.emacs) and setup
 ~helm-recoll-directories~ using ~customize-set-variable~ (not ~setq~).
 
+
+
