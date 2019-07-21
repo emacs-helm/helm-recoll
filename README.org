@@ -14,7 +14,7 @@ First you have to create an index for each directory you want
 to index, for this create some directories like "~/.recoll-<your-directory-name>"
 then create "recoll.conf" config files in each directory containing
 topdirs = <full/path/to/your/directory>
-then run recollindex -c ~/.recoll-<your-directory-name>
+then run =recollindex -c ~/.recoll-<your-directory-name>=
 to create index for each directory.
 See https://bitbucket.org/medoc/recoll/wiki/MultipleIndexes
 for more infos.
@@ -52,13 +52,13 @@ adding following code to your config:
        3))
 #+end_src
 
-You will just need to index recoll directory with same recollindex
+You will just need to index recoll directory with same ~recollindex~
 command as described above.
 
 ** Configure
 
 Then you need to create some helm-recoll sources before you can use them.
-You can create sources by customizing ~helm-recoll-directories~ (NOT `setq`).
+You can create sources by customizing ~helm-recoll-directories~ (NOT ~setq~).
 
 Then just call ~M-x helm-recoll~
 will build a specific command for each directory and the specific sources for
@@ -67,7 +67,7 @@ these directories.
 ** Installation
 
 After customizing ~helm-recoll-directories~ (see above)
-just require helm-recoll or even better autoload the `helm-recoll`
+just require ~helm-recoll~ or even better autoload the ~helm-recoll~
 function.
 If you use ~use-package~ you can use e.g.
 
@@ -86,7 +86,7 @@ Otherwise add a require statement for the library:
     (require 'helm-recoll)
 #+end_src
 
-to your init file (typically ~/.emacs) and setup
+to your init file and setup
 ~helm-recoll-directories~ using ~customize-set-variable~ (not ~setq~).
 
 
