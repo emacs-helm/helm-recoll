@@ -1,61 +1,91 @@
-#+TITLE: Helm-Recoll
-
 [[https://github.com/emacs-helm/helm-recoll/blob/master/LICENSE][file:http://img.shields.io/badge/license-GNU%20GPLv3-blue.svg]]
 [[http://stable.melpa.org/#/helm-recoll][file:http://stable.melpa.org/packages/helm-recoll-badge.svg]]
 [[http://melpa.org/#/helm-recoll][file:http://melpa.org/packages/helm-recoll-badge.svg]]
 
-Helm interface for the recoll desktop search tool.
 
-* Table of contents
+* Helm interface for the recoll desktop search tool. :TOC:
+  - [[#create-recoll-indexes][Create recoll indexes]]
+  - [[#configure][Configure]]
+  - [[#installation][Installation]]
 
- - [[#commentary][Commentary]]
- - [[#installation][Installation]]
- - [[#license][License]]
+** Create recoll indexes
 
-* Commentary
+First you have to create an index for each directory you want
+to index, for this create some directories like "~/.recoll-<your-directory-name>"
+then create "recoll.conf" config files in each directory containing
+topdirs = <full/path/to/your/directory>
+then run recollindex -c ~/.recoll-<your-directory-name>
+to create index for each directory.
+See https://bitbucket.org/medoc/recoll/wiki/MultipleIndexes
+for more infos.
 
-You need to create some =helm-recoll= sources before you can use them.
-You can create sources using the =helm-recoll-create-source= macro,
-e.g. like this:
+You can also create recoll index directories from `helm-find-files` by
+adding following code to your config:
 
-#+begin_src emacs-lisp
-  (helm-recoll-create-source "docs" "~/.recoll/docs")
-  (helm-recoll-create-source "progs" "~/.recoll/progs")
+#+begin_src elisp
+    (defun helm-ff-recoll-index-directory (directory)
+      "Create a recoll index directory from DIRECTORY.
+    Add the new created directory to `helm-recoll-directories' using the
+    basename of DIRECTORY as name.
+    By using `customize-set-variable', a new source is created for this
+    new directory."
+      (cl-assert (boundp 'helm-recoll-directories) nil
+                 "Package helm-recoll not installed or configured")
+      (let* ((bn (helm-basename (expand-file-name directory)))
+             (index-dir (format "~/.recoll-%s" bn))
+             (conf-file (expand-file-name "recoll.conf" index-dir))) 
+        (mkdir index-dir)
+        (with-current-buffer (find-file-noselect conf-file)
+          (insert (format "topdirs = %s" (expand-file-name directory)))
+          (save-buffer)
+          (kill-buffer))
+        (customize-set-variable 'helm-recoll-directories
+                                (append `((,bn . ,index-dir)) helm-recoll-directories))
+        (message "Don't forget to index config directory with 'recollindex -c %s'" index-dir)))
+
+    (defmethod helm-setup-user-source ((source helm-source-ffiles))
+      (helm-source-add-action-to-source-if
+       "Recoll index directory"
+       'helm-ff-recoll-index-directory
+       source
+       'file-directory-p
+       3))
 #+end_src
 
-=helm-recoll-create-source= defines a source named
-=helm-source-recoll-NAME= and an individual command named
-=helm-recoll-NAME= for every defined source.  With the above
-definitions, the commands =helm-recoll-docs= and =helm-recoll-progs=
-would be provided and start a Helm session for the created
-=helm-source-recoll-docs= and =helm-source-recoll-progs= sources
-respectivly.
+You will just need to index recoll directory with same recollindex
+command as described above.
 
-In addition, the command =helm-recoll= lists all currently defined
-recoll sources, and starts a helm session running the selected ones.
+** Configure
 
-* Installation
+Then you need to create some helm-recoll sources before you can use them.
+You can create sources by customizing `helm-recoll-directories' (NOT `setq`).
 
-Add a require statement for the library:
+Then just call M-x helm-recoll
+will build a specific command for each directory and the specific sources for
+these directories.
+
+** Installation
+
+After customizing `helm-recoll-directories' (see above)
+just require helm-recoll or even better autoload the `helm-recoll'
+function.
+If you use use-package you can use e.g
+
+#+begin_src elisp
+    (use-package helm-recoll
+        :commands helm-recoll
+        :init (setq helm-recoll-directories
+                    '(("confdir" . "~/.recoll-.emacs.d")
+                      ("lisp sources" . "~/.recoll-elisp")
+                      ("work" . "~/.recoll-work"))))
+
+#+end_src
+Otherwise add a require statement for the library:
 
 #+begin_src emacs-lisp
-  (require 'helm-recoll)
+    (require 'helm-recoll)
 #+end_src
 
-to your init file (typically ~/.emacs) and add your source definitions
-like shown above.
+to your init file (typically ~/.emacs) and setup
+`helm-recoll-directories` using `customize-set-variable` (not `setq`).
 
-* License
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
