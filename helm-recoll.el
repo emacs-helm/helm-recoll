@@ -268,10 +268,8 @@ For more details see:
          (option (helm-aand (member (car patterns) '("-l" "-f" "-a" "-o"))
                             (car it)))
          (pattern-seq (if option (cdr patterns) patterns)))
-    (append (if option
-                (helm-append-at-nth helm-recoll-options (list option) 1)
-              helm-recoll-options)
-            (list "-c" dir) (cons "-q" pattern-seq))))
+    (append helm-recoll-options
+            (list "-c" dir) (cons (or option "-q") pattern-seq))))
 
 (defun helm-recoll--candidates-process (&optional confdir)
   "Candidates function used by `helm-recoll-source'."
