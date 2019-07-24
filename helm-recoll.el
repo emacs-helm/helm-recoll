@@ -274,7 +274,10 @@ For more details see:
 (defun helm-recoll--candidates-process (&optional confdir)
   "Candidates function used by `helm-recoll-source'."
   (setq confdir (or confdir (helm-attr 'confdir)))
-  (let ((cmd (helm-recoll--setup-cmd confdir)))
+  (let ((cmd (helm-recoll--setup-cmd confdir))
+        (inhibit-quit t)) ; Avoid quitting unexpectedly within
+                          ; with-temp-buffer especially when deleting
+                          ; char backward.
     (helm-log "Command line used was:\n\n>>>%s" (mapconcat 'identity cmd " "))
     (with-temp-buffer
       (apply #'call-process "recoll" nil t nil (cdr cmd))
