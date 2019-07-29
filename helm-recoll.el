@@ -369,7 +369,8 @@ helm-recoll-<name>."
    (action :initform `(("Invoke helm with selected sources" .
                         ,(lambda (_candidate)
                            (helm :sources (helm-marked-candidates)
-                                 :buffer helm-recoll-sources-buffer)))
+                                 :buffer helm-recoll-sources-buffer
+                                 :ff-transformer-show-only-basename nil)))
                        ("Describe variable" . helm-describe-variable)))
    (persistent-action :initform (lambda (candidate)
                                   (helm-elisp--persistent-help
