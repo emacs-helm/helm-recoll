@@ -99,6 +99,10 @@ You do not need to include the -c option since this is already included, and the
 config directory can be passed as a argument to `helm-recoll-create-source'."
   :type '(repeat string))
 
+(defcustom helm-recoll-input-idle-delay 0.6
+  "The `helm-input-idle-delay' value for helm-recoll."
+  :type 'float)
+
 (defvar helm-recoll-sources-buffer "*helm recoll source select*")
 
 (defvar helm-recoll-history nil
@@ -384,8 +388,9 @@ helm-recoll-<name>."
 (defun helm-recoll nil
   "Select recoll sources for helm."
   (interactive)
-  (helm :sources 'helm-recoll-sources-source
-	:buffer helm-recoll-sources-buffer))
+  (let ((helm-input-idle-delay helm-recoll-input-idle-delay))
+    (helm :sources 'helm-recoll-sources-source
+          :buffer helm-recoll-sources-buffer)))
 
 (provide 'helm-recoll)
 
