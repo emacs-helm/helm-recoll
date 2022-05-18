@@ -275,30 +275,50 @@ For more details see:
             (list "-c" dir) (cons (or option "-q") pattern-seq))))
 
 (defun helm-recoll--candidates-process (&optional confdir)
-  "Candidates function used by `helm-recoll-source'."
+  "Candidates function used by function `helm-recoll-source'.
+Optional argument CONFDIR is the config directory for recoll to use."
   (setq confdir (or confdir (helm-attr 'confdir)))
   (let ((cmd (helm-recoll--setup-cmd confdir))
         (inhibit-quit t)) ; Avoid quitting unexpectedly within
-                          ; with-temp-buffer especially when deleting
-                          ; char backward.
+					; with-temp-buffer especially when deleting
+					; char backward.
     (helm-log "Command line used was:\n\n>>>%s" (mapconcat 'identity cmd " "))
     (with-temp-buffer
       (unless (eq (while-no-input
                     (apply #'call-process "recoll" nil '(t nil) nil (cdr cmd)))
                   t)
-        (split-string (buffer-string) "\n" t)))))
+	(if (member "-A" helm-recoll-options)
+	    (mapcar (lambda (x) (cons "" (string-replace "\n" "" x)))
+		    (split-string (buffer-string) "/ABSTRACT" t))
+	  (split-string (buffer-string) "\n" t))))))
 ;; As of Version: 1.22.4-1:
 ;; text/x-emacs-lisp	[file:///home/thierry/elisp/Emacs-wgrep/wgrep-helm.el]	[wgrep-helm.el]	3556	bytes	
 (defun helm-recoll-filter-one-by-one (file)
-  "Strip out all garbage provided by recoll."
-  (when (string-match "\\`\\(.*\\)\\(\\s-+\\)\\(\\[file://\\)\\([^]]+\\)\\(\\]\\)" file)
+  "Strip out all garbage provided by recoll from FILE."
+  (when (string-match "\\`\\(.*\\)\\(\\s-+\\)\\(\\[file://\\)\\([^]]+\\)\\(\\]\\)\\(.*\\)" file)
     ;; FIXME: Should I filter out directories from 1th group (inode/directory)?
     (match-string 4 file)))
 
+(defun helm-recoll-filter-one-by-one2 (cand)
+  "Strip out all garbage provided by recoll from (cdr CAND)."
+  (let ((file (cdr cand)))
+    (when (string-match "\\`\\(.*\\)\\(\\s-+\\)\\(\\[file://\\)\\([^]]+\\)\\(\\]\\)\\(.*\\)ABSTRACT\\(.*\\)" file)
+      (cons
+       (propertize
+	(concat (propertize (helm-basename (match-string 4 file)) 'face 'helm-ff-file)
+		":" (match-string 7 file)))
+       (match-string 4 file)))))
+
 (defun helm-recoll-filtered-transformer (candidates _source)
-  (cl-loop for c in candidates
-           for candidate = (helm-recoll-filter-one-by-one c)
-           when candidate collect it))
+  (if (member "-A" helm-recoll-options)
+      (cl-loop for c in candidates
+	       for candidate = (helm-recoll-filter-one-by-one2 c)
+	       when candidate collect it)
+    (helm-highlight-files
+     (cl-loop for c in candidates
+	      for candidate = (helm-recoll-filter-one-by-one c)
+	      when candidate collect it)
+     _source)))
 
 (defclass helm-recoll-override-inheritor (helm-type-file) ())
 
@@ -316,7 +336,7 @@ For more details see:
 (defmethod helm--setup-source :after ((source helm-recoll-override-inheritor))
   (let ((actions (slot-value source 'action)))
     (setf (slot-value source 'filtered-candidate-transformer)
-          '(helm-recoll-filtered-transformer helm-highlight-files))
+	  '(helm-recoll-filtered-transformer))
     (setf (slot-value source 'action-transformer) nil)
     (setf (slot-value source 'help-message) 'helm-recoll-help-message)
     (setf (slot-value source 'keymap) helm-recoll-map)
