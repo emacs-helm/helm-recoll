@@ -358,7 +358,7 @@ The first argument NAME is a string.  Define a source variable
 named `helm-source-recoll-NAME' and a command named
 `helm-recoll-NAME'.  CONFDIR is the path to the config directory
 which recoll should use. INPUT is an optional string to place in the 
-minibuffer when `helm-recoll-NAME' is started."
+minibuffer when the `helm-recoll-NAME' command is invoked."
   (let ((source  (intern (concat "helm-source-recoll-" name))))
     (defalias (intern (concat "helm-recoll-" name))
       (lambda ()
