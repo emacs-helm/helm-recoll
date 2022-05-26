@@ -352,20 +352,22 @@ Optional argument CONFDIR is the config directory for recoll to use."
            do (helm-recoll-create-source n d)))
 
 ;;;###autoload
-(defun helm-recoll-create-source (name confdir)
+(defun helm-recoll-create-source (name confdir &optional input)
   "Create helm source and associated functions for recoll search results.
 The first argument NAME is a string.  Define a source variable
 named `helm-source-recoll-NAME' and a command named
 `helm-recoll-NAME'.  CONFDIR is the path to the config directory
-which recoll should use."
+which recoll should use. INPUT is an optional string to place in the 
+minibuffer when `helm-recoll-NAME' is started."
   (let ((source  (intern (concat "helm-source-recoll-" name))))
     (defalias (intern (concat "helm-recoll-" name))
-        (lambda ()
-          (interactive)
-          (require 'helm-recoll)
-          (helm :sources source
-                :history 'helm-recoll-history
-                :buffer helm-recoll-sources-buffer)))
+      (lambda ()
+	(interactive)
+	(require 'helm-recoll)
+	(helm :sources source
+	      :input input
+	      :history 'helm-recoll-history
+	      :buffer helm-recoll-sources-buffer)))
     (set source
          (helm-make-source (concat "Recoll " name)
              'helm-recoll-source :confdir (expand-file-name confdir)))
