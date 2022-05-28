@@ -288,32 +288,53 @@ Optional argument CONFDIR is the config directory for recoll to use."
                     (apply #'call-process "recoll" nil '(t nil) nil (cdr cmd)))
                   t)
 	(if (member "-A" helm-recoll-options)
-	    (mapcar (lambda (x) (cons "" (string-replace "\n" "" x)))
-		    (split-string (buffer-string) "/ABSTRACT" t))
+	    (if (member "-p" helm-recoll-options)
+		(cl-loop for item in (split-string (buffer-string) "/SNIPPETS" t)
+			 do (string-match "\\[file://\\([^]]+\\)\\]" item)
+			 and nconc
+			 (let* ((file (match-string 1 item))
+				(lines (split-string
+					(replace-regexp-in-string "^\\(.\\|\n\\)*SNIPPETS" "" item)
+					"\n" t)))
+			   (mapcar (lambda (l) (cons file l)) lines)))
+	      (mapcar (lambda (x) (cons "" (string-replace "\n" "" x)))
+		      (split-string (buffer-string) "/ABSTRACT" t)))
 	  (split-string (buffer-string) "\n" t))))))
 ;; As of Version: 1.22.4-1:
 ;; text/x-emacs-lisp	[file:///home/thierry/elisp/Emacs-wgrep/wgrep-helm.el]	[wgrep-helm.el]	3556	bytes	
 (defun helm-recoll-filter-one-by-one (file)
   "Strip out all garbage provided by recoll from FILE."
-  (when (string-match "\\`\\(.*\\)\\(\\s-+\\)\\(\\[file://\\)\\([^]]+\\)\\(\\]\\)\\(.*\\)" file)
+  (when (string-match "\\[file://\\([^]]+\\)\\]" file)
     ;; FIXME: Should I filter out directories from 1th group (inode/directory)?
-    (match-string 4 file)))
+    (match-string 1 file)))
 
 (defun helm-recoll-filter-one-by-one2 (cand)
   "Strip out all garbage provided by recoll from (cdr CAND)."
-  (let ((file (cdr cand)))
-    (when (string-match "\\`\\(.*\\)\\(\\s-+\\)\\(\\[file://\\)\\([^]]+\\)\\(\\]\\)\\(.*\\)ABSTRACT\\(.*\\)" file)
-      (cons
-       (propertize
-	(concat (propertize (helm-basename (match-string 4 file)) 'face 'helm-ff-file)
-		":" (match-string 7 file)))
-       (match-string 4 file)))))
+  (let ((str (cdr cand)))
+    (when (string-match "\\[file://\\([^]]+\\)\\].*ABSTRACT\\(.*\\)" str)
+      (cons (concat (propertize (helm-basename (match-string 1 str)) 'face 'helm-ff-file)
+		    ":" (match-string 2 str))
+	    (match-string 4 str)))))
+
+(defun helm-recoll-filter-one-by-one3 (cand)
+  "Strip out all garbage provided by recoll from (cdr CAND)."
+  (let ((file (car cand))
+	(str (cdr cand)))
+    (cons (concat (propertize (helm-basename file) 'face 'helm-ff-file)
+		  ":" str)
+	  file)))
 
 (defun helm-recoll-filtered-transformer (candidates _source)
   (if (member "-A" helm-recoll-options)
-      (cl-loop for c in candidates
-	       for candidate = (helm-recoll-filter-one-by-one2 c)
-	       when candidate collect it)
+      ;; this code is longer than it could be if we selected the one-by-one function in the loop, 
+      ;; but it's faster this way
+      (if (member "-p" helm-recoll-options)
+	  (cl-loop for c in candidates
+		   for candidate = (helm-recoll-filter-one-by-one3 c)
+		   when candidate collect it)
+	(cl-loop for c in candidates
+		 for candidate = (helm-recoll-filter-one-by-one2 c)
+		 when candidate collect it))
     (helm-highlight-files
      (cl-loop for c in candidates
 	      for candidate = (helm-recoll-filter-one-by-one c)
