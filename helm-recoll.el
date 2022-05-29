@@ -279,29 +279,31 @@ For more details see:
 Optional argument CONFDIR is the config directory for recoll to use."
   (setq confdir (or confdir (helm-attr 'confdir)))
   (let ((cmd (helm-recoll--setup-cmd confdir))
-        (inhibit-quit t)) ; Avoid quitting unexpectedly within
+        (inhibit-quit t))  ; Avoid quitting unexpectedly within
 					; with-temp-buffer especially when deleting
 					; char backward.
     (helm-log "Command line used was:\n\n>>>%s" (mapconcat 'identity cmd " "))
     (with-temp-buffer
       (unless (eq (while-no-input
-                    (apply #'call-process "recoll" nil '(t nil) nil (cdr cmd)))
-                  t)
-	(if (member "-A" helm-recoll-options)
-	    (if (member "-p" helm-recoll-options)
-		(cl-loop for item in (split-string (buffer-string) "/SNIPPETS" t)
-			 do (string-match "\\[file://\\([^]]+\\)\\]" item)
-			 and nconc
-			 (let* ((file (match-string 1 item))
-				(lines (split-string
-					(replace-regexp-in-string "^\\(.\\|\n\\)*SNIPPETS" "" item)
-					"\n" t)))
-			   (mapcar (lambda (l) (string-match "^[0-9]+" l)
-				     (cons (concat file ":" (match-string 0 l)) l))
-				   lines)))
-	      (mapcar (lambda (x) (cons "" (string-replace "\n" "" x)))
-		      (split-string (buffer-string) "/ABSTRACT" t)))
-	  (split-string (buffer-string) "\n" t))))))
+		    (apply #'call-process "recoll" nil '(t nil) nil (cdr cmd)))
+		  t)
+	(let ((parts (split-string (buffer-string) "/SNIPPETS" t)))
+	  (when (> (length parts) 1)
+	    (if (member "-A" helm-recoll-options)
+		(if (member "-p" helm-recoll-options)
+		    (cl-loop for part in parts
+			     do (string-match "\\[file://\\([^]]+\\)\\]" part)
+			     and nconc
+			     (let* ((file (match-string 1 part))
+				    (lines (split-string
+					    (replace-regexp-in-string "^\\(.\\|\n\\)*SNIPPETS" "" part)
+					    "\n" t)))
+			       (mapcar (lambda (l) (string-match "^[0-9]+" l)
+					 (cons (concat file ":" (match-string 0 l)) l))
+				       lines)))
+		  (mapcar (lambda (x) (cons "" (string-replace "\n" "" x)))
+			  (split-string (buffer-string) "/ABSTRACT" t)))
+	      (split-string (buffer-string) "\n" t))))))))
 ;; As of Version: 1.22.4-1:
 ;; text/x-emacs-lisp	[file:///home/thierry/elisp/Emacs-wgrep/wgrep-helm.el]	[wgrep-helm.el]	3556	bytes	
 (defun helm-recoll-filter-one-by-one (file)
