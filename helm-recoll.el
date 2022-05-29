@@ -317,7 +317,7 @@ Optional argument CONFDIR is the config directory for recoll to use."
     (when (string-match "\\[file://\\([^]]+\\)\\].*ABSTRACT\\(.*\\)" str)
       (cons (concat (propertize (helm-basename (match-string 1 str)) 'face 'helm-ff-file)
 		    ":" (match-string 2 str))
-	    (match-string 4 str)))))
+	    (match-string 1 str)))))
 
 (defun helm-recoll-filter-one-by-one3 (cand)
   "Strip out all garbage provided by recoll from (cdr CAND)."
