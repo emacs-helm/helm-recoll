@@ -296,7 +296,9 @@ Optional argument CONFDIR is the config directory for recoll to use."
 				(lines (split-string
 					(replace-regexp-in-string "^\\(.\\|\n\\)*SNIPPETS" "" item)
 					"\n" t)))
-			   (mapcar (lambda (l) (cons file l)) lines)))
+			   (mapcar (lambda (l) (string-match "^[0-9]+" l)
+				     (cons (concat file ":" (match-string 0 l)) l))
+				   lines)))
 	      (mapcar (lambda (x) (cons "" (string-replace "\n" "" x)))
 		      (split-string (buffer-string) "/ABSTRACT" t)))
 	  (split-string (buffer-string) "\n" t))))))
@@ -326,7 +328,7 @@ Optional argument CONFDIR is the config directory for recoll to use."
 
 (defun helm-recoll-filtered-transformer (candidates _source)
   (if (member "-A" helm-recoll-options)
-      ;; this code is longer than it could be if we selected the one-by-one function in the loop, 
+      ;; this code is longer than it could be if we selected the one-by-one function in the loop,
       ;; but it's faster this way
       (if (member "-p" helm-recoll-options)
 	  (cl-loop for c in candidates
@@ -340,6 +342,94 @@ Optional argument CONFDIR is the config directory for recoll to use."
 	      for candidate = (helm-recoll-filter-one-by-one c)
 	      when candidate collect it)
      _source)))
+
+(cl-defun helm-recoll-find-file (cand &optional (func 'find-file) &rest args)
+  "Use FUNC to open file in CAND, and if it has a page number appended, jump to that page.
+FUNC should return the buffer containing the file, which will also be returned by this function.
+If FUNC takes extra arguments these can be specified in ARGS."
+  (if (cl-subsetp '("-A" "-p") helm-recoll-options :test 'equal)
+      (let* ((m (string-match "^\\(.*\\):\\([0-9]+\\)$" cand))
+	     (file (match-string 1 cand))
+	     (page (string-to-number (match-string 2 cand)))
+	     (buf (apply func file args)))
+	(with-current-buffer buf
+	  (case major-mode
+	    (pdf-view-mode (pdf-view-goto-page page))
+	    (doc-view-mode (doc-view-goto-page page))
+	    (t nil)))
+	buf)
+    (apply func cand args)))
+
+(defun helm-recoll-find-file-or-marked (candidate)
+  "Open file CANDIDATE or open helm-recoll marked files in separate windows.
+If the candidate has an associated page number appended, jump to that page.
+Called with one prefix arg open files in separate windows in a
+vertical split.
+Called with two prefix arg open files in background without
+selecting them."
+  (let ((marked (helm-marked-candidates :with-wildcard t))
+        (ffap-newfile-prompt helm-ff-newfile-prompt-p)
+        (find-file-wildcards nil)
+        (helm--reading-passwd-or-string t)
+	(ff-noselect (lambda (f) (helm-recoll-find-file f 'find-file-noselect))))
+    (if (cdr marked)
+        (if (equal helm-current-prefix-arg '(16))
+            (mapcar ff-noselect marked)
+          ;; If helm-current-prefix-arg is detected split is done vertically.
+          (helm-window-show-buffers (mapcar ff-noselect marked)))
+      (let ((dir (helm-basedir candidate)))
+        (cond ((and dir (file-directory-p dir))
+               (helm-recoll-find-file (substitute-in-file-name candidate)))
+              ;; A a non--existing filename ending with /
+              ;; Create a directory and jump to it.
+              ((and (not (file-exists-p candidate))
+                    (string-match "/$" candidate))
+               (helm-ff--mkdir candidate 'helm-ff))
+              ;; A non--existing filename NOT ending with / or
+              ;; an existing filename, create or jump to it.
+              ;; If the basedir of candidate doesn't exists,
+              ;; ask for creating it.
+              (dir
+               (helm-ff--mkdir dir)
+               (helm-recoll-find-file candidate))
+              ;; Find file at `default-directory' when basedir is
+              ;; unspecified e.g user hit C-k foo RET.
+              (t (helm-recoll-find-file candidate)))))))
+
+(defun helm-recoll-find-files-other-window (_candidate)
+  "Keep ‘current-buffer’ and open files in separate windows.
+When a prefix arg is detected files are opened in a vertical
+windows layout."
+  (let* ((files (helm-marked-candidates))
+         (buffers (mapcar (lambda (f) (helm-recoll-find-file f 'find-file-noselect))
+			  files)))
+    (helm-window-show-buffers buffers t)))
+
+(defun helm-recoll-find-file-as-root (candidate)
+  (let (file page)
+    (if (cl-subsetp '("-A" "-p") helm-recoll-options :test 'equal)
+	(and (string-match "^\\(.*\\)\\(:[0-9]+\\)$" candidate)
+	     (setq file (match-string 1 candidate)
+		   page (match-string 2 candidate)))
+      (setq file candidate page ""))
+    (let* ((buf (helm-basename file))
+	   (host (file-remote-p file 'host))
+	   (remote-path (format "/%s:%s:%s"
+				helm-su-or-sudo
+				(or host "")
+				(expand-file-name
+				 (if host
+				     (file-remote-p file 'localname)
+				   file))))
+	   non-essential)
+      (if (buffer-live-p (get-buffer buf))
+	  (progn
+	    (set-buffer buf)
+	    (helm-recoll-find-file (concat remote-path page) 'find-alternate-file))
+	(helm-recoll-find-file (concat remote-path page))))))
+
+(defun helm-recoll-find-file-other-frame (cand &optional wildcards)
+  (helm-recoll-find-file cand 'find-file-other-frame wildcards))
 
 (defclass helm-recoll-override-inheritor (helm-type-file) ())
 
@@ -355,7 +445,7 @@ Optional argument CONFDIR is the config directory for recoll to use."
    (nohighlight :initform t)))
 
 (defmethod helm--setup-source :after ((source helm-recoll-override-inheritor))
-  (let ((actions (slot-value source 'action)))
+  (let ((actions (symbol-value (slot-value source 'action))))
     (setf (slot-value source 'filtered-candidate-transformer)
 	  '(helm-recoll-filtered-transformer))
     (setf (slot-value source 'action-transformer) nil)
@@ -363,9 +453,21 @@ Optional argument CONFDIR is the config directory for recoll to use."
     (setf (slot-value source 'keymap) helm-recoll-map)
     (setf (slot-value source 'action)
           (helm-append-at-nth
-           (symbol-value actions)
-           '(("Run helm with selected candidates" . helm-recoll-action-require-helm))
-           1))))
+	   actions
+	   '(("Run helm with selected candidates" . helm-recoll-action-require-helm))
+	   1))
+    (helm-aif (rassoc 'helm-find-file-or-marked actions)
+	(setf (cdr it)
+	      'helm-recoll-find-file-or-marked))
+    (helm-aif (rassoc 'helm-find-files-other-window actions)
+	(setf (cdr it)
+	      'helm-recoll-find-files-other-window))
+    (helm-aif (rassoc 'helm-find-file-as-root actions)
+	(setf (cdr it)
+	      'helm-recoll-find-file-as-root))
+    (helm-aif (rassoc 'find-file-other-frame actions)
+	(setf (cdr it)
+	      'helm-recoll-find-file-other-frame))))
 
 (defun helm-recoll-build-sources (var value)
   (set var value)
