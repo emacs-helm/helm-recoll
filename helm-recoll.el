@@ -364,6 +364,7 @@ If FUNC takes extra arguments these can be specified in ARGS."
 	buf)
     (apply func cand args)))
 
+;; Tweaked version of `helm-find-file-or-marked' to handle helm-recoll candidates
 (defun helm-recoll-find-file-or-marked (candidate)
   "Open file CANDIDATE or open helm-recoll marked files in separate windows.
 If the candidate has an associated page number appended, jump to that page.
@@ -379,27 +380,19 @@ selecting them."
     (if (cdr marked)
         (if (equal helm-current-prefix-arg '(16))
             (mapcar ff-noselect marked)
-          ;; If helm-current-prefix-arg is detected split is done vertically.
           (helm-window-show-buffers (mapcar ff-noselect marked)))
       (let ((dir (helm-basedir candidate)))
         (cond ((and dir (file-directory-p dir))
                (helm-recoll-find-file (substitute-in-file-name candidate)))
-              ;; A a non--existing filename ending with /
-              ;; Create a directory and jump to it.
               ((and (not (file-exists-p candidate))
                     (string-match "/$" candidate))
                (helm-ff--mkdir candidate 'helm-ff))
-              ;; A non--existing filename NOT ending with / or
-              ;; an existing filename, create or jump to it.
-              ;; If the basedir of candidate doesn't exists,
-              ;; ask for creating it.
               (dir
                (helm-ff--mkdir dir)
                (helm-recoll-find-file candidate))
-              ;; Find file at `default-directory' when basedir is
-              ;; unspecified e.g user hit C-k foo RET.
               (t (helm-recoll-find-file candidate)))))))
 
+;; Tweaked version of `helm-recoll-find-files-other-window' to handle helm-recoll candidates
 (defun helm-recoll-find-files-other-window (_candidate)
   "Keep ‘current-buffer’ and open files in separate windows.
 When a prefix arg is detected files are opened in a vertical
@@ -409,6 +402,7 @@ windows layout."
 			  files)))
     (helm-window-show-buffers buffers t)))
 
+;; Tweaked version of `helm-recoll-find-file-as-root' to handle helm-recoll candidates
 (defun helm-recoll-find-file-as-root (candidate)
   (let (file page)
     (if (cl-subsetp '("-A" "-p") helm-recoll-options :test 'equal)
