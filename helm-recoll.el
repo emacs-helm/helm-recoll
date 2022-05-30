@@ -287,21 +287,24 @@ Optional argument CONFDIR is the config directory for recoll to use."
       (unless (eq (while-no-input
 		    (apply #'call-process "recoll" nil '(t nil) nil (cdr cmd)))
 		  t)
-	(when (string-match "\\[file://" (buffer-string))
-	  (if (member "-A" helm-recoll-options)
-	      (if (member "-p" helm-recoll-options)
-		  (cl-loop for part in (split-string (buffer-string) "/SNIPPETS" t)
-			   do (string-match "\\[file://\\([^]]+\\)\\]" part)
-			   and nconc
-			   (let* ((file (match-string 1 part))
-				  (lines (split-string
-					  (replace-regexp-in-string "^\\(.\\|\n\\)*SNIPPETS" "" part)
-					  "\n" t)))
-			     (mapcar (lambda (l) (string-match "^[0-9]+" l)
-				       (cons (concat file ":" (match-string 0 l)) l))
-				     lines)))
-		(mapcar (lambda (x) (cons "" (string-replace "\n" "" x)))
-			(split-string (buffer-string) "/ABSTRACT" t)))
+	(if (member "-A" helm-recoll-options)
+	    (if (member "-p" helm-recoll-options)
+		(let ((parts (split-string (buffer-string) "/SNIPPETS" t)))
+		  (when (> (length parts) 1)
+		    (cl-loop for part in parts
+			     do (string-match "\\[file://\\([^]]+\\)\\]" part)
+			     and nconc
+			     (let* ((file (match-string 1 part))
+				    (lines (split-string
+					    (replace-regexp-in-string "^\\(.\\|\n\\)*SNIPPETS" "" part)
+					    "\n" t)))
+			       (mapcar (lambda (l) (string-match "^[0-9]+" l)
+					 (cons (concat file ":" (match-string 0 l)) l))
+				       lines)))))
+	      (let ((parts (split-string (buffer-string) "/ABSTRACT" t)))
+		(when (> (length parts) 1)
+		  (mapcar (lambda (x) (cons "" (string-replace "\n" "" x))) parts))))
+	  (when (string-match "\\[file://" (buffer-string))
 	    (split-string (buffer-string) "\n" t)))))))
 ;; As of Version: 1.22.4-1:
 ;; text/x-emacs-lisp	[file:///home/thierry/elisp/Emacs-wgrep/wgrep-helm.el]	[wgrep-helm.el]	3556	bytes	
