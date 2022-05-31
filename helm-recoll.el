@@ -255,112 +255,56 @@ For more details see:
 
 ;;; Actions
 
+(defun helm-recoll-alter-actions (actions)
+  "Alter ACTIONS so that `helm-recoll' specific actions are used where possible."
+  (let ((actions2 (copy-alist actions)))
+    (helm-aif (rassoc 'helm-find-file-or-marked actions2)
+	(setf (cdr it) 'helm-recoll-find-file-or-marked))
+    (helm-aif (rassoc 'helm-find-files-other-window actions2)
+	(setf (cdr it) 'helm-recoll-find-files-other-window))
+    (helm-aif (rassoc 'helm-find-file-as-root actions2)
+	(setf (cdr it) 'helm-recoll-find-file-as-root))
+    (helm-aif (rassoc 'find-file-other-frame actions2)
+	(setf (cdr it) 'helm-recoll-find-file-other-frame))
+    actions2))
+
 (defun helm-recoll-action-require-helm (_candidate)
   "Invoke helm with selected candidates."
   (require 'helm-files)
   (helm :sources (helm-build-sync-source "Select"
-		   :candidates (helm-marked-candidates)
+		   :candidates (mapcar
+				(lambda (x)
+				  (string-match "^\\([^:]*\\)\\(.*\\)" x)
+ 				  (let ((path (match-string 1 x))
+					(str (match-string 2 x)))
+				    (cons (concat (propertize (helm-basename path) 'face 'helm-ff-file)
+						  str)
+					  (if (cl-subsetp '("-A" "-p") helm-recoll-options :test 'equal)
+					      (concat path (and (string-match "^:[0-9]+" str)
+								(match-string 0 str)))
+					    path))))
+				(helm-marked-candidates))
 		   :keymap helm-find-files-map
 		   :fuzzy-match t
-		   :action helm-find-files-actions)))
-
-;;; Main
-
-(defun helm-recoll--setup-cmd (dir)
-  (let* ((patterns (split-string helm-pattern))
-         (option (helm-aand (member (car patterns) '("-l" "-f" "-a" "-o"))
-                            (car it)))
-         (pattern-seq (if option (cdr patterns) patterns)))
-    (append helm-recoll-options
-            (list "-c" dir) (cons (or option "-q") pattern-seq))))
-
-(defun helm-recoll--candidates-process (&optional confdir)
-  "Candidates function used by function `helm-recoll-source'.
-Optional argument CONFDIR is the config directory for recoll to use."
-  (setq confdir (or confdir (helm-attr 'confdir)))
-  (let ((cmd (helm-recoll--setup-cmd confdir))
-        (inhibit-quit t))  ; Avoid quitting unexpectedly within
-					; with-temp-buffer especially when deleting
-					; char backward.
-    (helm-log "Command line used was:\n\n>>>%s" (mapconcat 'identity cmd " "))
-    (with-temp-buffer
-      (unless (eq (while-no-input
-		    (apply #'call-process "recoll" nil '(t nil) nil (cdr cmd)))
-		  t)
-	(if (member "-A" helm-recoll-options)
-	    (if (member "-p" helm-recoll-options)
-		(let ((parts (split-string (buffer-string) "/SNIPPETS" t)))
-		  (when (> (length parts) 1)
-		    (cl-loop for part in parts
-			     do (string-match "\\[file://\\([^]]+\\)\\]" part)
-			     and nconc
-			     (let* ((file (match-string 1 part))
-				    (lines (split-string
-					    (replace-regexp-in-string "^\\(.\\|\n\\)*SNIPPETS" "" part)
-					    "\n" t)))
-			       (mapcar (lambda (l) (string-match "^[0-9]+" l)
-					 (cons (concat file ":" (match-string 0 l)) l))
-				       lines)))))
-	      (let ((parts (split-string (buffer-string) "/ABSTRACT" t)))
-		(when (> (length parts) 1)
-		  (mapcar (lambda (x) (cons "" (string-replace "\n" "" x))) parts))))
-	  (when (string-match "\\[file://" (buffer-string))
-	    (split-string (buffer-string) "\n" t)))))))
-;; As of Version: 1.22.4-1:
-;; text/x-emacs-lisp	[file:///home/thierry/elisp/Emacs-wgrep/wgrep-helm.el]	[wgrep-helm.el]	3556	bytes	
-(defun helm-recoll-filter-one-by-one (file)
-  "Strip out all garbage provided by recoll from FILE."
-  (when (string-match "\\[file://\\([^]]+\\)\\]" file)
-    ;; FIXME: Should I filter out directories from 1th group (inode/directory)?
-    (match-string 1 file)))
-
-(defun helm-recoll-filter-one-by-one2 (cand)
-  "Strip out all garbage provided by recoll from (cdr CAND)."
-  (let ((str (cdr cand)))
-    (when (string-match "\\[file://\\([^]]+\\)\\].*ABSTRACT\\(.*\\)" str)
-      (cons (concat (propertize (helm-basename (match-string 1 str)) 'face 'helm-ff-file)
-		    ":" (match-string 2 str))
-	    (match-string 1 str)))))
-
-(defun helm-recoll-filter-one-by-one3 (cand)
-  "Strip out all garbage provided by recoll from (cdr CAND)."
-  (let ((file (car cand))
-	(str (cdr cand)))
-    (cons (concat (propertize (helm-basename file) 'face 'helm-ff-file)
-		  ":" str)
-	  file)))
-
-(defun helm-recoll-filtered-transformer (candidates _source)
-  (if (member "-A" helm-recoll-options)
-      ;; this code is longer than it could be if we selected the one-by-one function in the loop,
-      ;; but it's faster this way
-      (if (member "-p" helm-recoll-options)
-	  (cl-loop for c in candidates
-		   for candidate = (helm-recoll-filter-one-by-one3 c)
-		   when candidate collect it)
-	(cl-loop for c in candidates
-		 for candidate = (helm-recoll-filter-one-by-one2 c)
-		 when candidate collect it))
-    (helm-highlight-files
-     (cl-loop for c in candidates
-	      for candidate = (helm-recoll-filter-one-by-one c)
-	      when candidate collect it)
-     _source)))
+		   :action (helm-recoll-alter-actions helm-find-files-actions))))
 
 (cl-defun helm-recoll-find-file (cand &optional (func 'find-file) &rest args)
   "Use FUNC to open file in CAND, and if it has a page number appended, jump to that page.
 FUNC should return the buffer containing the file, which will also be returned by this function.
 If FUNC takes extra arguments these can be specified in ARGS."
-  (if (cl-subsetp '("-A" "-p") helm-recoll-options :test 'equal)
-      (let* ((m (string-match "^\\(.*\\):\\([0-9]+\\)$" cand))
+  (if (member "-A" helm-recoll-options)
+      (let* ((m (string-match "^\\([^:]*\\)\\(.*\\)$" cand))
 	     (file (match-string 1 cand))
-	     (page (string-to-number (match-string 2 cand)))
+	     (str (match-string 2 cand))
 	     (buf (apply func file args)))
-	(with-current-buffer buf
-	  (case major-mode
-	    (pdf-view-mode (pdf-view-goto-page page))
-	    (doc-view-mode (doc-view-goto-page page))
-	    (t nil)))
+	(when (member "-p" helm-recoll-options)
+	  (string-match "^:\\([0-9]+\\).*$" str)
+	  (let* ((page (string-to-number (match-string 1 str))))
+	    (with-current-buffer buf
+	      (case major-mode
+		(pdf-view-mode (pdf-view-goto-page page))
+		(doc-view-mode (doc-view-goto-page page))
+		(t nil)))))
 	buf)
     (apply func cand args)))
 
@@ -428,6 +372,87 @@ windows layout."
 
 (defun helm-recoll-find-file-other-frame (cand &optional wildcards)
   (helm-recoll-find-file cand 'find-file-other-frame wildcards))
+
+;;; Main
+
+(defun helm-recoll--setup-cmd (dir)
+  (let* ((patterns (split-string helm-pattern))
+         (option (helm-aand (member (car patterns) '("-l" "-f" "-a" "-o"))
+                            (car it)))
+         (pattern-seq (if option (cdr patterns) patterns)))
+    (append helm-recoll-options
+            (list "-c" dir) (cons (or option "-q") pattern-seq))))
+
+(defun helm-recoll--candidates-process (&optional confdir)
+  "Candidates function used by function `helm-recoll-source'.
+Optional argument CONFDIR is the config directory for recoll to use."
+  (setq confdir (or confdir (helm-attr 'confdir)))
+  (let ((cmd (helm-recoll--setup-cmd confdir))
+        (inhibit-quit t))  ; Avoid quitting unexpectedly within
+					; with-temp-buffer especially when deleting
+					; char backward.
+    (helm-log "Command line used was:\n\n>>>%s" (mapconcat 'identity cmd " "))
+    (with-temp-buffer
+      (unless (eq (while-no-input
+		    (apply #'call-process "recoll" nil '(t nil) nil (cdr cmd)))
+		  t)
+	(if (member "-A" helm-recoll-options)
+	    (if (member "-p" helm-recoll-options)
+		(let ((parts (split-string (buffer-string) "/SNIPPETS" t)))
+		  (when (> (length parts) 1)
+		    (cl-loop for part in parts
+			     for parts2 = (split-string part "SNIPPETS" t)
+			     for filepart = (car (last (split-string (car parts2) "\n" t)))
+			     if (and (= (length parts2) 2)
+				     (string-match "\\[file://\\([^]]+\\)\\]" filepart))
+			     nconc
+			     (let* ((file (match-string 1 filepart))
+				    (lines (split-string (cadr parts2) "\n" t)))
+			       (mapcar (lambda (l)
+					 (cons (concat (propertize (helm-basename file) 'face 'helm-ff-file)
+						       ":" l)
+					       ;; text is kept in real candidate so it can be displayed
+					       ;; by `helm-recoll-action-require-helm'
+					       (concat file ":" l)))
+				       lines)))))
+	      (let ((parts (split-string (buffer-string) "/ABSTRACT" t)))
+		(when (> (length parts) 1)
+		  (mapcar (lambda (x) (cons "" (string-replace "\n" "" x))) parts))))
+	  (when (string-match "\\[file://" (buffer-string))
+	    (split-string (buffer-string) "\n" t)))))))
+;; As of Version: 1.22.4-1:
+;; text/x-emacs-lisp	[file:///home/thierry/elisp/Emacs-wgrep/wgrep-helm.el]	[wgrep-helm.el]	3556	bytes	
+(defun helm-recoll-filter-one-by-one (file)
+  "Strip out all garbage provided by recoll from FILE."
+  (when (string-match "\\[file://\\([^]]+\\)\\]" file)
+    ;; FIXME: Should I filter out directories from 1th group (inode/directory)?
+    (match-string 1 file)))
+
+(defun helm-recoll-filter-one-by-one2 (cand)
+  "Strip out all garbage provided by recoll from (cdr CAND)."
+  (let ((str (cdr cand)))
+    (when (string-match "\\[file://\\([^]]+\\)\\].*ABSTRACT\\(.*\\)" str)
+      (let ((path (match-string 1 str))
+	    (txt (match-string 2 str)))
+	(cons (concat (propertize (helm-basename path) 'face 'helm-ff-file) ":" txt)
+	      ;; txt is kept in real candidate so it can be displayed
+	      ;; by `helm-recoll-action-require-helm'
+	      (concat path ":" txt))))))
+
+(defun helm-recoll-filtered-transformer (candidates _source)
+  (if (member "-A" helm-recoll-options)
+      ;; this code is longer than it could be if we selected the one-by-one function in the loop,
+      ;; but it's faster this way
+      (if (member "-p" helm-recoll-options)
+	  (cl-loop for c in candidates when c collect it)
+	(cl-loop for c in candidates
+		 for candidate = (helm-recoll-filter-one-by-one2 c)
+		 when candidate collect it))
+    (helm-highlight-files
+     (cl-loop for c in candidates
+	      for candidate = (helm-recoll-filter-one-by-one c)
+	      when candidate collect it)
+     _source)))
 
 (defclass helm-recoll-override-inheritor (helm-type-file) ())
 
