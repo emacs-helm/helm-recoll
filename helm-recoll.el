@@ -281,7 +281,8 @@ For more details see:
         (inhibit-quit t)) ; Avoid quitting unexpectedly within
                           ; with-temp-buffer especially when deleting
                           ; char backward.
-    (helm-log "Command line used was:\n\n>>>%s" (mapconcat 'identity cmd " "))
+    (helm-log "helm-recoll--candidates-process"
+              "Command line used was:\n\n>>>%s" (mapconcat 'identity cmd " "))
     (with-temp-buffer
       (unless (eq (while-no-input
                     (apply #'call-process "recoll" nil '(t nil) nil (cdr cmd)))
