@@ -276,7 +276,7 @@ For more details see:
 
 (defun helm-recoll--candidates-process (&optional confdir)
   "Candidates function used by `helm-recoll-source'."
-  (setq confdir (or confdir (helm-attr 'confdir)))
+  (setq confdir (or confdir (helm-get-attr 'confdir)))
   (let ((cmd (helm-recoll--setup-cmd confdir))
         (inhibit-quit t)) ; Avoid quitting unexpectedly within
                           ; with-temp-buffer especially when deleting
@@ -310,11 +310,11 @@ For more details see:
    (candidates :initform #'helm-recoll--candidates-process)
    (match-dynamic :initform t)
    (requires-pattern :initform 3)
-   (history :initform helm-recoll-history)
+   (history :initform 'helm-recoll-history)
    (candidate-number-limit :initform 9999)
    (nohighlight :initform t)))
 
-(defmethod helm--setup-source :after ((source helm-recoll-override-inheritor))
+(cl-defmethod helm--setup-source :after ((source helm-recoll-override-inheritor))
   (let ((actions (slot-value source 'action)))
     (setf (slot-value source 'filtered-candidate-transformer)
           '(helm-recoll-filtered-transformer helm-highlight-files))
