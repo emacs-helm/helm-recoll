@@ -84,6 +84,10 @@
 (require 'helm)
 (require 'helm-for-files)
 
+(eval-and-compile
+  (when (version<= emacs-version "29.0.50")
+    (require 'eieio-compat)))
+
 (defvar helm-find-files-actions)
 (defvar helm-find-files-map)
 (defvar helm-ff-help-message)
