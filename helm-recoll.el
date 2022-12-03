@@ -285,7 +285,7 @@ For more details see:
               "Command line used was:\n\n>>>%s" (mapconcat 'identity cmd " "))
     (with-temp-buffer
       (unless (eq (while-no-input
-                    (apply #'call-process "recoll" nil '(t nil) nil (cdr cmd)))
+                    (apply #'call-process (car helm-recoll-options) nil '(t nil) nil (cdr cmd)))
                   t)
         (split-string (buffer-string) "\n" t)))))
 ;; As of Version: 1.22.4-1:
